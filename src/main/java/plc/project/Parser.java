@@ -53,7 +53,23 @@ public final class Parser {
      * statement, then it is an expression/assignment statement.
      */
     public Ast.Stmt parseStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        // throw new UnsupportedOperationException(); //TODO
+
+        if (peek("LET")) {
+            // 'LET' identifier ('=' expression)? ';'
+            return parseDeclarationStatement();
+        } else {
+            // expression ('=' expression)? ';'
+            Ast.Expr expr = parseExpression();
+            // TODO: if next token is = then handle assignment
+
+            if (!match(";")) {
+                throw new ParseException("Expected semicolon.", -1);
+                // TODO: handle actual character index instead of -1
+            }
+
+            return new Ast.Stmt.Expression(expr);
+        }
     }
 
     /**
@@ -62,7 +78,30 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Stmt.Declaration parseDeclarationStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        // throw new UnsupportedOperationException(); //TODO
+
+        // 'LET' identifier ('=' expression)? ';'
+
+        match("LET");
+
+        if (!match(Token.Type.IDENTIFIER)) {
+            throw new ParseException("Expected Identifier.", -1);
+            // TODO: handle actual character index instead of -1
+        }
+
+        String name = tokens.get(-1).getLiteral();
+
+        Optional<Ast.Expr> value = Optional.empty();
+
+        if (match("=")) {
+            value = Optional.of(parseExpression());
+        }
+
+        if (!match(";")) {
+            throw new ParseException("Expected semicolon.", -1);
+            // TODO: handle actual character index instead of -1
+        }
+        return new Ast.Stmt.Declaration(name, value);
     }
 
     /**
@@ -154,6 +193,8 @@ public final class Parser {
         //throw new UnsupportedOperationException(); //TODO
         if (match("TRUE")) {
             return new Ast.Expr.Literal(true);
+        } else if (match("FALSE")) {
+            return new Ast.Expr.Literal(false);
         } else if (match(Token.Type.IDENTIFIER)) {
             String name = tokens.get(-1).getLiteral();
             // TODO: handle function case if next token is (
