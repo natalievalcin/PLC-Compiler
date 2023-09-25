@@ -1,5 +1,7 @@
 package plc.project;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
@@ -195,6 +197,14 @@ public final class Parser {
             return new Ast.Expr.Literal(true);
         } else if (match("FALSE")) {
             return new Ast.Expr.Literal(false);
+        } else if (match("NIL")) {
+            return new Ast.Expr.Literal(null);
+        } else if (match(Token.Type.INTEGER)) {
+            BigInteger integer = new BigInteger(tokens.get(-1).getLiteral());
+            return new Ast.Expr.Literal(integer);
+        } else if (match(Token.Type.DECIMAL)) {
+            BigDecimal decimal = new BigDecimal(tokens.get(-1).getLiteral());
+            return new Ast.Expr.Literal(decimal);
         } else if (match(Token.Type.IDENTIFIER)) {
             String name = tokens.get(-1).getLiteral();
             // TODO: handle function case if next token is (
