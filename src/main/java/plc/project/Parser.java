@@ -205,7 +205,43 @@ public final class Parser {
         } else if (match(Token.Type.DECIMAL)) {
             BigDecimal decimal = new BigDecimal(tokens.get(-1).getLiteral());
             return new Ast.Expr.Literal(decimal);
-        } else if (match(Token.Type.IDENTIFIER)) {
+        } else if (peek(Token.Type.CHARACTER)) {
+            // Professor Aashish assisted me in this portion of the code during OH 09/25
+            if (tokens.get(0).getLiteral().length() < 2) {
+                Character character = tokens.get(0).getLiteral().charAt(1);
+                match(Token.Type.CHARACTER);
+                return new Ast.Expr.Literal(character);
+            } else {
+                String temporary = tokens.get(0).getLiteral();
+                temporary = temporary.replace("\\b","\b");
+                temporary = temporary.replace("\\n","\n");
+                temporary = temporary.replace("\\r","\r");
+                temporary = temporary.replace("\\t","\t");
+                if (temporary.equals("'\\\"'"))
+                    temporary = "'\"'";
+                if (temporary.equals("'\\\\'"))
+                    temporary = "'\\'";
+                if (temporary.equals("'\\\''"))
+                    temporary = "'\''";
+                Character character = temporary.charAt(1);
+                match(Token.Type.CHARACTER);
+                return new Ast.Expr.Literal(character);
+            }
+        } else if (peek(Token.Type.STRING)) {
+            String temporary = tokens.get(0).getLiteral();
+
+            temporary = temporary.replace("\\b","\b");
+            temporary = temporary.replace("\\n","\n");
+            temporary = temporary.replace("\\r","\r");
+            temporary = temporary.replace("\\t","\t");
+
+            temporary = temporary.replace("\\\"", "\"");
+            temporary = temporary.replace("\\\\", "\\");
+            temporary = temporary.replace("\\\'", "\'");
+            temporary = temporary.substring(1, temporary.length() - 1);
+            match(Token.Type.STRING);
+            return new Ast.Expr.Literal(temporary);
+        }else if (match(Token.Type.IDENTIFIER)) {
             String name = tokens.get(-1).getLiteral();
             // TODO: handle function case if next token is (
             return new Ast.Expr.Access(Optional.empty(), name);
