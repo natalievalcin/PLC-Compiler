@@ -2,6 +2,7 @@ package plc.project;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -244,6 +245,19 @@ public final class Parser {
         }else if (match(Token.Type.IDENTIFIER)) {
             String name = tokens.get(-1).getLiteral();
             // TODO: handle function case if next token is (
+            if (match("(")) {
+
+                List<Ast.Expr> expressions = new ArrayList<>();
+
+                while (!peek(")")) {
+                    expressions.add(parseExpression());
+                    if (peek(",")) {
+                        match(",");
+                    }
+                }
+                match(")");
+                return new Ast.Expr.Function(Optional.empty(), name, expressions);
+            }
             return new Ast.Expr.Access(Optional.empty(), name);
             // obj.method()
         }  else if(match("(")) {
