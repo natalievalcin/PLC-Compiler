@@ -74,7 +74,14 @@ public final class Parser {
             if(peek("=")){
                 match("=");
                 Ast.Expr ex = parseExpression();
-                return new Ast.Stmt.Assignment(expr, ex);
+                if(peek(";")){
+                    match(";");
+                    return new Ast.Stmt.Assignment(expr, ex);
+                }
+                else {
+                    throw new ParseException("No semicolon", tokens.get(0).getIndex());
+                }
+
             }
             else {
                 if (peek(";")) {
@@ -266,7 +273,12 @@ public final class Parser {
         while (match("AND") || match("OR")){
             String temp = tokens.get(-1).getLiteral();
             Ast.Expr rightExpr = parseEqualityExpression();
-            leftExpr = new Ast.Expr.Binary(temp, leftExpr, rightExpr);
+            if(!peek("AND") || !match("OR")){
+                return new Ast.Expr.Binary(temp, leftExpr, rightExpr);
+            }
+            else {
+                leftExpr = new Ast.Expr.Binary(temp, leftExpr, rightExpr);
+            }
         }
         return leftExpr;
 
@@ -283,7 +295,12 @@ public final class Parser {
                 || match("==") || match("!=")) {
             String temp = tokens.get(-1).getLiteral();
             Ast.Expr rightExpr = parseAdditiveExpression();
-            leftExpr = new Ast.Expr.Binary(temp, leftExpr, rightExpr);
+            if (!peek("<") && !peek("<=") && !peek(">") && !peek(">=") && !peek("==") && !peek("!=") ) {
+                return new Ast.Expr.Binary(temp, leftExpr, rightExpr);
+            }
+            else {
+                leftExpr = new Ast.Expr.Binary(temp, leftExpr, rightExpr);
+            }
         }
         return leftExpr;
     }
@@ -297,7 +314,12 @@ public final class Parser {
         while (match("+") || match("-")){
             String temp = tokens.get(-1).getLiteral();
             Ast.Expr rightExpr = parseMultiplicativeExpression();
-            leftExpr = new Ast.Expr.Binary(temp, leftExpr, rightExpr);
+            if (!peek("+") && !peek("-")) {
+                return new Ast.Expr.Binary(temp, leftExpr, rightExpr);
+            }
+            else {
+                leftExpr = new Ast.Expr.Binary(temp, leftExpr, rightExpr);
+            }
         }
         return leftExpr;
     }
@@ -308,12 +330,9 @@ public final class Parser {
     public Ast.Expr parseMultiplicativeExpression() throws ParseException {
         //throw new UnsupportedOperationException(); //TODO
         Ast.Expr secondary_expression = parseSecondaryExpression();
-
         while (match("*") || match("/")) {
             String operation = tokens.get(-1).getLiteral();
-
             match(Token.Type.OPERATOR);
-
             Ast.Expr next_secondary_expr = parseSecondaryExpression();
 
             if (!peek("*") && !peek("/")) {
@@ -451,8 +470,13 @@ public final class Parser {
 
                 while (!peek(")")) {
                     expressions.add(parseExpression());
+
                     if (peek(",")) {
                         match(",");
+                        //Check if it peek closing parenthesis then we throw ParseException
+                        if(peek(")")) {
+                            throw new ParseException("Trailing comma", tokens.get(0).getIndex());
+                        }
                     }
                 }
                 match(")");
