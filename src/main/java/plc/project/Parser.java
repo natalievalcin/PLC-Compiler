@@ -1,5 +1,6 @@
 package plc.project;
 
+import com.sun.javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.TouchEvent;
 
 import java.math.BigDecimal;
@@ -30,9 +31,19 @@ public final class Parser {
     /**
      * Parses the {@code source} rule.
      */
-    //source ::= flied* method*
+    //source ::= field* method*
     public Ast.Source parseSource() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        //throw new UnsupportedOperationException(); //TODO
+        List<Ast.Field> fields = new ArrayList<Ast.Field>();
+        List<Ast.Method> methods = new ArrayList<Ast.Method>();
+
+        if (peek("LET"))
+            fields.add(parseField());
+
+        if (peek("DEF"))
+            methods.add(parseMethod());
+
+        return new Ast.Source(fields, methods);
     }
 
     /**
@@ -222,6 +233,7 @@ public final class Parser {
 
             //check for else
             if(peek("ELSE")){
+                match("ELSE");
                 //parse else statement
                 while (!peek("END")) {
                     elseStmt.add(parseStatement());
