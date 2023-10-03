@@ -1,11 +1,10 @@
 package plc.project;
 
+import javafx.scene.input.TouchEvent;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * The parser takes the sequence of tokens emitted by the lexer and turns that
@@ -31,6 +30,7 @@ public final class Parser {
     /**
      * Parses the {@code source} rule.
      */
+    //source ::= flied* method*
     public Ast.Source parseSource() throws ParseException {
         throw new UnsupportedOperationException(); //TODO
     }
@@ -39,17 +39,90 @@ public final class Parser {
      * Parses the {@code field} rule. This method should only be called if the
      * next tokens start a field, aka {@code LET}.
      */
+    //flied ::= 'LET' identifier ('=' expression)? ';'
     public Ast.Field parseField() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        //if match LET
+        match("LET");
+        //Declare variable
+        String variableName = "";
+        if(match(Token.Type.IDENTIFIER)){
+            variableName = tokens.get(0).getLiteral();
+        }
+        else {
+            throw new ParseException("Should declare variable", tokens.get(0).getIndex());
+        }
+
+        Optional<Ast.Expr> value = Optional.empty();
+
+
+        if (match("=")) {
+            value = Optional.of(parseExpression());
+        }
+
+        if (!match(";")) {
+            throw new ParseException("Expected semicolon.", tokens.get(0).getIndex());
+            // TODO: handle actual character index instead of -1
+        }
+
+        return new Ast.Field(variableName, value);
+
+
+
     }
 
     /**
      * Parses the {@code method} rule. This method should only be called if the
      * next tokens start a method, aka {@code DEF}.
      */
+    //method ::= 'DEF' identifier '(' (identifier (',' identifier)*)? ')' 'DO' statement* 'END'
+
     public Ast.Method parseMethod() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        match("DEF");
+
+        String name = "";
+        List<String> parameters = new ArrayList<>();
+
+        if (match(Token.Type.IDENTIFIER)) {
+            name = tokens.get(0).getLiteral();
+        } else {
+            throw new ParseException("Method name (identifier) expected", tokens.get(0).getIndex());
+        }
+
+
+        if (match("(")) {
+
+            while (match(Token.Type.IDENTIFIER)) {
+                parameters.add(tokens.get(-1).getLiteral());
+
+                if(peek(",")){
+                    match(",");
+                }
+                else {
+                    throw new ParseException("No", tokens.get(0).getIndex());
+                }
+            }
+
+
+            if (!match(")")) {
+                throw new ParseException("Closing parenthesis ')' expected", tokens.get(0).getIndex());
+            }
+        }
+
+        if (match("DO")) {
+
+            List<Ast.Stmt> statements = new ArrayList<>();
+
+            while (!peek("END")) {
+                statements.add(parseStatement());
+            }
+            match("END");
+
+            return new Ast.Method(name, parameters, statements);
+        } else {
+            throw new ParseException("'DO' keyword expected", tokens.get(0).getIndex());
+        }
     }
+
 
     /**
      * Parses the {@code statement} rule and delegates to the necessary method.
