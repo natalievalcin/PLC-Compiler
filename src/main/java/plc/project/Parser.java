@@ -37,11 +37,18 @@ public final class Parser {
         List<Ast.Field> fields = new ArrayList<Ast.Field>();
         List<Ast.Method> methods = new ArrayList<Ast.Method>();
 
-        if (peek("LET"))
-            fields.add(parseField());
+        // citing Max (OH 10/06): field/method may be multiples, so maybe think of adding a while loop;
 
-        if (peek("DEF"))
-            methods.add(parseMethod());
+
+        if (peek("LET")) {
+            while(peek("LET"))
+                fields.add(parseField());
+        }
+
+        if (peek("DEF")) {
+            while(peek("DEF"))
+                methods.add(parseMethod());
+        }
 
         return new Ast.Source(fields, methods);
     }
