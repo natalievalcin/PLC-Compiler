@@ -34,25 +34,22 @@ public final class Parser {
     //source ::= field* method*
     public Ast.Source parseSource() throws ParseException {
         //throw new UnsupportedOperationException(); //TODO
-        List<Ast.Field> fields = new ArrayList<Ast.Field>();
-        List<Ast.Method> methods = new ArrayList<Ast.Method>();
+            List<Ast.Field> fields = new ArrayList<Ast.Field>();
+            List<Ast.Method> methods = new ArrayList<Ast.Method>();
 
-        // citing Max (OH 10/06): field/method may be multiples, so maybe think of adding a while loop;
+            // citing Max (OH 10/06): field/method may be multiples, so maybe think of adding a while loop;
+            if (peek("LET")) {
+                while (peek("LET"))
+                    fields.add(parseField());
+            }
 
+            if (peek("DEF")) {
+                while (peek("DEF"))
+                    methods.add(parseMethod());
+            }
 
-        if (peek("LET")) {
-            while(peek("LET"))
-                fields.add(parseField());
-        }
-
-        if (peek("DEF")) {
-            while(peek("DEF"))
-                methods.add(parseMethod());
-        }
-
-        return new Ast.Source(fields, methods);
+            return new Ast.Source(fields, methods);
     }
-
     /**
      * Parses the {@code field} rule. This method should only be called if the
      * next tokens start a field, aka {@code LET}.
@@ -224,6 +221,7 @@ public final class Parser {
         }
 
         if (!match(";")) {
+             System.out.println("HM");
             if (tokens.has(0))
                 throw new ParseException("Expected semicolon", tokens.get(0).getIndex());
             else
@@ -403,12 +401,7 @@ public final class Parser {
         while (match("AND") || match("OR")){
             String temp = tokens.get(-1).getLiteral();
             Ast.Expr rightExpr = parseEqualityExpression();
-            if(!peek("AND") || !match("OR")){
-                return new Ast.Expr.Binary(temp, leftExpr, rightExpr);
-            }
-            else {
-                leftExpr = new Ast.Expr.Binary(temp, leftExpr, rightExpr);
-            }
+            leftExpr = new Ast.Expr.Binary(temp, leftExpr, rightExpr);
         }
         return leftExpr;
 
@@ -621,7 +614,12 @@ public final class Parser {
         }  else if(match("(")) {
             Ast.Expr expr = parseExpression();
             if (!match(")")) {
-                throw new ParseException("Expected closing parenthesis.", tokens.get(0).getIndex());
+                if(tokens.has(0)) {
+                    throw new ParseException("Expected closing parenthesis.", tokens.get(0).getIndex());
+                }
+                else{
+                    throw new ParseException("Expected closing parenthesis.", tokens.get(-1).getIndex()+tokens.get(-1).getLiteral().length());
+                }
                 // TODO: handle actual character index instead of -1
             }
             return new Ast.Expr.Group(expr);
