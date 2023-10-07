@@ -20,6 +20,38 @@ import java.util.stream.Stream;
  */
 final class ParserTests {
 
+    private static <T extends Ast> void testParseException(List<Token> tokens, Exception exception, Function<Parser, T> function) {
+        Parser parser = new Parser(tokens);
+        ParseException pe = Assertions.assertThrows(ParseException.class, () -> function.apply(parser));
+        Assertions.assertEquals(exception, pe);
+    }
+    private static Stream<Arguments> testScenarioParseException() {
+        return Stream.of(
+                Arguments.of("Missing Semicolon",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "f", 0)
+                        ),
+                        new ParseException("Expected semicolon", 1)
+                ),
+                Arguments.of("Missing Closing Parenthesis",
+                        Arrays.asList(
+                                //(expr
+                                new Token(Token.Type.OPERATOR, "(", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 1)
+                        ),
+                        new ParseException("Expected closing parenthesis `)`.", 5)
+                ),
+                //moi
+                Arguments.of("Missing Operand", Arrays.asList(
+                                //expr -
+                                new Token(Token.Type.IDENTIFIER, "expr", 0),
+                                new Token(Token.Type.OPERATOR, "-",5)
+                        ),
+                        new ParseException("Expected Operand", 7))
+
+        );
+    }
+
     @ParameterizedTest
     @MethodSource
     void testSource(String test, List<Token> tokens, Ast.Source expected) {
