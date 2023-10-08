@@ -37,16 +37,22 @@ public final class Parser {
             List<Ast.Field> fields = new ArrayList<Ast.Field>();
             List<Ast.Method> methods = new ArrayList<Ast.Method>();
 
-            // citing Max (OH 10/06): field/method may be multiples, so maybe think of adding a while loop;
-            if (peek("LET")) {
-                while (peek("LET"))
-                    fields.add(parseField());
+        // citing Max (OH 10/06): field/method may be multiples, so maybe think of adding a while loop;
+        if (peek("LET")) {
+            while(peek("LET")) {
+                fields.add(parseField());
+                if (tokens.has(0) && (!peek("LET") && !peek("DEF")))
+                    throw new ParseException("Incorrect source: !LET || ! DEF", tokens.get(0).getIndex());
             }
+        }
 
-            if (peek("DEF")) {
-                while (peek("DEF"))
-                    methods.add(parseMethod());
+        if (peek("DEF")) {
+            while(peek("DEF")) {
+                methods.add(parseMethod());
+                if (tokens.has(0) && !peek("DEF"))
+                    throw new ParseException("Incorrect source: !DEF", tokens.get(0).getIndex());
             }
+        }
 
             return new Ast.Source(fields, methods);
     }
