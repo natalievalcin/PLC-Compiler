@@ -25,6 +25,13 @@ final class ParserTests {
         ParseException pe = Assertions.assertThrows(ParseException.class, () -> function.apply(parser));
         Assertions.assertEquals(exception, pe);
     }
+
+    @ParameterizedTest
+    @MethodSource
+    void  testScenarioParseException(String test, List<Token> tokens, ParseException exception){
+        testParseException(tokens, exception, Parser::parseExpression);
+    }
+
     private static Stream<Arguments> testScenarioParseException() {
         return Stream.of(
                 Arguments.of("Missing Semicolon",
