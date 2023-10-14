@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
@@ -53,7 +54,26 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Method ast) {
-        throw new UnsupportedOperationException(); //TODO
+        //throw new UnsupportedOperationException(); //TODO
+        List<Environment.PlcObject> arguments = new ArrayList<Environment.PlcObject>();
+        scope.defineFunction(ast.getName(), ast.getParameters().size(), arguments);
+        try {
+            scope = new Scope(scope);
+            //Define variables for the incoming arguments, using the parameter names.
+            for(int i = 0; i < arguments.size(); i++){
+                scope.defineVariable(ast.getParameters().get(i), arguments.get(i));
+            }
+            //Evaluate the methods statements
+            for (Ast.Stmt stmt : ast.getStatements()){
+                visit(stmt);
+            }
+
+        }finally {
+            //s
+            scope = scope.getParent();
+        }
+
+        return Environment.NIL;
 
     }
 
