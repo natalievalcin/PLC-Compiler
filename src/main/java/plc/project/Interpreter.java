@@ -25,8 +25,19 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Source ast) {
+        //throw new UnsupportedOperationException(); //TODO
+        //use for loop to iterate each field
+        for(Ast.Field field : ast.getFields()){
+            visit(field);
+        }
+        //use for loop to iterate each method
+        for(Ast.Method method : ast.getMethods()){
+            visit(method);
+        }
+        //create a list
+        List<Environment.PlcObject> arguments = new ArrayList<Environment.PlcObject>();
+        return scope.lookupFunction("main",0).invoke(arguments);
 
-        throw new UnsupportedOperationException(); //TODO
     }
 
     @Override
@@ -42,8 +53,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Method ast) {
-
         throw new UnsupportedOperationException(); //TODO
+
     }
 
     @Override
@@ -99,14 +110,20 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Stmt.Return ast) {
+       // throw new UnsupportedOperationException(); //TODO
+        Environment.PlcObject value = visit(ast.getValue());
+        return Environment.NIL;
 
-        throw new UnsupportedOperationException(); //TODO
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Literal ast) {
-
-        throw new UnsupportedOperationException(); //TODO
+        if(ast.getLiteral() != null){
+            return Environment.create(ast.getLiteral());
+        }
+        else {
+            return Environment.NIL;
+        }
     }
 
     @Override
