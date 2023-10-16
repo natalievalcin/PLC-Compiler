@@ -55,26 +55,28 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Method ast) {
         //throw new UnsupportedOperationException(); //TODO
-        List<Environment.PlcObject> arguments = new ArrayList<Environment.PlcObject>();
-        scope.defineFunction(ast.getName(), ast.getParameters().size(), arguments);
-        try {
-            scope = new Scope(scope);
-            //Define variables for the incoming arguments, using the parameter names.
-            for(int i = 0; i < arguments.size(); i++){
-                scope.defineVariable(ast.getParameters().get(i), arguments.get(i));
-            }
-            //Evaluate the methods statements
-            for (Ast.Stmt stmt : ast.getStatements()){
-                visit(stmt);
-            }
+        // List<Environment.PlcObject> arguments = new ArrayList<Environment.PlcObject>();
+        // Max explained the callback function(lambda), which assisted in reworking the
+        // code in this function. OH: 10/16
+        scope.defineFunction(ast.getName(), ast.getParameters().size(), arguments -> {
+            try {
+                scope = new Scope(scope);
+                //Define variables for the incoming arguments, using the parameter names.
+                for(int i = 0; i < arguments.size(); i++){
+                    scope.defineVariable(ast.getParameters().get(i), arguments.get(i));
+                }
+                //Evaluate the methods statements
+                for (Ast.Stmt stmt : ast.getStatements()){
+                    visit(stmt);
+                }
 
-        }finally {
-            //s
-            scope = scope.getParent();
-        }
-
+            }finally {
+                //s
+                scope = scope.getParent();
+            }
+            return Environment.NIL;
+        });
         return Environment.NIL;
-
     }
 
     @Override
