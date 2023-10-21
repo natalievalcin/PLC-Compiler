@@ -65,6 +65,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 for(int i = 0; i < arguments.size(); i++){
                     scope.defineVariable(ast.getParameters().get(i), arguments.get(i));
                 }
+
                 //Evaluate the methods statements
                 for (Ast.Stmt stmt : ast.getStatements()){
                     visit(stmt);
@@ -73,8 +74,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             }finally {
                 //s
                 scope = scope.getParent();
-            }
-            return Environment.NIL;
+            }return Environment.NIL;
         });
         return Environment.NIL;
     }
@@ -205,17 +205,48 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Binary ast) {
-        throw new UnsupportedOperationException(); //TODO
+        //throw new UnsupportedOperationException(); //TODO
+
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Access ast) {
-        throw new UnsupportedOperationException(); //TODO
+        //throw new UnsupportedOperationException(); //TODO
+        //check if the expression has a receiver
+        if (ast.getReceiver().isPresent()){
+            //evaluate it
+            Environment.PlcObject value = visit(ast.getReceiver().get());
+            //return the value of the appropriate field
+            return value.getField(ast.getName()).getValue();
+        }
+        //otherwise return the value of the appropriate variable in the current scope.
+        return scope.lookupVariable(ast.getName()).getValue();
+
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Function ast) {
-        throw new UnsupportedOperationException(); //TODO
+        //throw new UnsupportedOperationException(); //TODO
+        //create a list to hold arguments
+        List<Environment.PlcObject> arguments = new ArrayList<Environment.PlcObject>();
+        //loop through ast.getArguments
+        for (Ast.Expr args: ast.getArguments()){
+            arguments.add(visit(args));
+        }
+        //check if the expression has a receive;
+        if (ast.getReceiver().isPresent()) {
+            //evaluate it
+            Environment.PlcObject value = visit(ast.getReceiver().get());
+            //return the result of calling the appropriate method
+            //callMethod(String name, List<PlcObject> arguments)
+            return value.callMethod(ast.getName(), arguments);
+
+        }else {
+            //otherwise return the value of invoking the appropriate function in the current scope with the evaluated arguments.
+            return scope.lookupFunction(ast.getName(), arguments.size()).invoke(arguments);
+        }
+
     }
 
     /**
