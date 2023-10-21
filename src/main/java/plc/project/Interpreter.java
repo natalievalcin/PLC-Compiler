@@ -81,8 +81,9 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Stmt.Expression ast) {
-
-        throw new UnsupportedOperationException(); //TODO
+        //Evaluates the expression. Returns NIL
+        visit(ast.getExpression());
+        return Environment.NIL;
     }
 
     @Override
@@ -102,9 +103,23 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         //throw new UnsupportedOperationException(); //TODO
         if (ast.getReceiver().getClass() == Ast.Expr.Access.class) {
             try {
-
+                scope = new Scope(scope);
+                //ensure that the receiver is an Ast.Expr.Access
+                Ast.Expr.Access access = Ast.Expr.Access.class.cast(ast.getReceiver());
+                if(access.getReceiver().isPresent()){
+                    // evaluate it
+                    Environment.PlcObject value = visit(access.getReceiver().get());
+                    //   public void setField(String name, PlcObject value) {
+                    //            scope.lookupVariable(name).setValue(value);
+                    //        }
+                    value.setField(access.getName(), visit(ast.getValue()));
+                }
+                else { //otherwise lookup and set a variable in the current scope
+                    Environment.Variable variable = scope.lookupVariable(access.getName());
+                    variable.setValue(visit(ast.getValue()));
+                }
             } finally {
-
+                scope = scope.getParent();
             }
         }
         return Environment.NIL;
@@ -184,7 +199,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Group ast) {
-        throw new UnsupportedOperationException(); //TODO
+        //Evaluates the contained expression, returning it's value
+        return visit(ast.getExpression());
     }
 
     @Override
