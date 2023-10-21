@@ -58,6 +58,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         // List<Environment.PlcObject> arguments = new ArrayList<Environment.PlcObject>();
         // Max explained the callback function(lambda), which assisted in reworking the
         // code in this function. OH: 10/16
+
+        // parent scope and a child scope may be easier: this is from professor aashish
         scope.defineFunction(ast.getName(), ast.getParameters().size(), arguments -> {
             try {
                 scope = new Scope(scope);
@@ -203,10 +205,71 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         return visit(ast.getExpression());
     }
 
+//    public static final class Binary extends Ast.Expr {
+//
+//        private final String operator;
+//        private final Expr left;
+//        private final Expr right;
+//
+//        public Binary(String operator, Expr left, Expr right) {
+//            this.operator = operator;
+//            this.left = left;
+//            this.right = right;
+//        }
+//
+//        public String getOperator() {
+//            return operator;
+//        }
+//
+//        public Expr getLeft() {
+//            return left;
+//        }
+//
+//        public Expr getRight() {
+//            return right;
+//        }
+//
+//        @Override
+//        public boolean equals(Object obj) {
+//            return obj instanceof Binary &&
+//                    operator.equals(((Binary) obj).operator) &&
+//                    left.equals(((Binary) obj).left) &&
+//                    right.equals(((Binary) obj).right);
+//        }
+//
+//        @Override
+//        public String toString() {
+//            return "Ast.Expr.Binary{" +
+//                    "operator='" + operator + '\'' +
+//                    ", left=" + left +
+//                    ", right=" + right +
+//                    '}';
+//        }
+//
+//    }
+
     @Override
     public Environment.PlcObject visit(Ast.Expr.Binary ast) {
         //throw new UnsupportedOperationException(); //TODO
+        String binaryOperator = ast.getOperator();
+        switch(ast.getOperator())
+        {
+            case("AND"):
+                if (requireType(Boolean.class, visit(ast.getLeft())) == requireType(Boolean.class, visit(ast.getRight())))
+                    return visit(ast.getLeft());
+                else
+                    return Environment.create(Boolean.FALSE);
+            case("OR"):
+                if (requireType(Boolean.class, visit(ast.getLeft())) == Boolean.TRUE)
+                    return visit(ast.getLeft());
+                else if (requireType(Boolean.class, visit(ast.getRight())) == Boolean.TRUE)
+                    return visit(ast.getRight());
+                else
+                    return Environment.create(Boolean.FALSE);
+            case("<"):
+                return Environment.create(requireType(Comparable.class,visit(ast.getLeft())).compareTo(requireType(Comparable.class,visit(ast.getRight()))) < 0);
 
+        }
         return Environment.NIL;
     }
 
