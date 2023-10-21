@@ -268,6 +268,17 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                     return Environment.create(Boolean.FALSE);
             case("<"):
                 return Environment.create(requireType(Comparable.class,visit(ast.getLeft())).compareTo(requireType(Comparable.class,visit(ast.getRight()))) < 0);
+            case("<="):
+                return Environment.create(requireType(Comparable.class,visit(ast.getLeft())).compareTo(requireType(Comparable.class,visit(ast.getRight()))) <= 0);
+            case(">"):
+                return Environment.create(requireType(Comparable.class,visit(ast.getLeft())).compareTo(requireType(Comparable.class,visit(ast.getRight()))) > 0);
+            case(">="):
+                return Environment.create(requireType(Comparable.class,visit(ast.getLeft())).compareTo(requireType(Comparable.class,visit(ast.getRight()))) >= 0);
+            case("=="):
+                return Environment.create(ast.getLeft().equals(ast.getRight()));
+            case("!="):
+                return Environment.create(!ast.getLeft().equals(ast.getRight()));
+
 
         }
         return Environment.NIL;
