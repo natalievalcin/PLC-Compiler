@@ -38,6 +38,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         }
         //create a list
         List<Environment.PlcObject> arguments = new ArrayList<Environment.PlcObject>();
+
+        // either not storing the value in the asi.statement.return OR not catching that exception and getting the value from it
         return scope.lookupFunction("main",0).invoke(arguments);
 
     }
@@ -64,22 +66,31 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         scope.defineFunction(ast.getName(), ast.getParameters().size(), arguments -> {
             try {
                 scope = new Scope(scope);
-                //Define variables for the incoming arguments, using the parameter names.
-                for(int i = 0; i < arguments.size(); i++){
+                // Define variables for the incoming arguments, using the parameter names.
+                for (int i = 0; i < arguments.size(); i++) {
                     scope.defineVariable(ast.getParameters().get(i), arguments.get(i));
                 }
 
-                //Evaluate the methods statements
-                for (Ast.Stmt stmt : ast.getStatements()){
-                    visit(stmt);
+                // Evaluate the method's statements.
+                Environment.PlcObject returnValue = Environment.NIL; // so value can be returned in a Return exception if thrown
+                for (Ast.Stmt stmt : ast.getStatements()) {
+                    try {
+                        returnValue = visit(stmt);
+                    } catch (Return returnException) {
+                        // Capture the return value and break out of the loop.
+                        returnValue = returnException.value;
+                        break;
+                    }
                 }
-
-            }finally {
-                //s
+                return returnValue;
+            } finally {
+                // Restore the parent scope when finished.
                 scope = scope.getParent();
-            }return Environment.NIL;
+            }
         });
+
         return Environment.NIL;
+
     }
 
     @Override
@@ -185,9 +196,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Stmt.Return ast) {
        // throw new UnsupportedOperationException(); //TODO
-        Environment.PlcObject value = visit(ast.getValue());
-        return Environment.NIL;
-
+        throw new Return(visit(ast.getValue()));
     }
 
     @Override
@@ -205,49 +214,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         //Evaluates the contained expression, returning it's value
         return visit(ast.getExpression());
     }
-
-//    public static final class Binary extends Ast.Expr {
-//
-//        private final String operator;
-//        private final Expr left;
-//        private final Expr right;
-//
-//        public Binary(String operator, Expr left, Expr right) {
-//            this.operator = operator;
-//            this.left = left;
-//            this.right = right;
-//        }
-//
-//        public String getOperator() {
-//            return operator;
-//        }
-//
-//        public Expr getLeft() {
-//            return left;
-//        }
-//
-//        public Expr getRight() {
-//            return right;
-//        }
-//
-//        @Override
-//        public boolean equals(Object obj) {
-//            return obj instanceof Binary &&
-//                    operator.equals(((Binary) obj).operator) &&
-//                    left.equals(((Binary) obj).left) &&
-//                    right.equals(((Binary) obj).right);
-//        }
-//
-//        @Override
-//        public String toString() {
-//            return "Ast.Expr.Binary{" +
-//                    "operator='" + operator + '\'' +
-//                    ", left=" + left +
-//                    ", right=" + right +
-//                    '}';
-//        }
-//
-//    }
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Binary ast) {
