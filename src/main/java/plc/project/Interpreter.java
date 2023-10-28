@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -252,7 +253,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     public Environment.PlcObject visit(Ast.Expr.Binary ast) {
         //throw new UnsupportedOperationException(); //TODO
         String binaryOperator = ast.getOperator();
-        switch(ast.getOperator())
+        switch(binaryOperator)
         {
             case("AND"):
                 if (requireType(Boolean.class, visit(ast.getLeft())) == requireType(Boolean.class, visit(ast.getRight())))
@@ -275,10 +276,78 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             case(">="):
                 return Environment.create(requireType(Comparable.class,visit(ast.getLeft())).compareTo(requireType(Comparable.class,visit(ast.getRight()))) >= 0);
             case("=="):
-                return Environment.create(ast.getLeft().equals(ast.getRight()));
+                return Environment.create(Objects.equals(visit(ast.getLeft()).getValue(), visit(ast.getRight()).getValue()));
             case("!="):
-                return Environment.create(!ast.getLeft().equals(ast.getRight()));
+                return Environment.create(!Objects.equals(visit(ast.getLeft()).getValue(), visit(ast.getRight()).getValue()));
+            case("+"):
+                //If either operand is a String, concatenate them.
+                if (visit(ast.getLeft()).getValue().getClass() == String.class || visit(ast.getRight()).getValue().getClass() == String.class) {
+                    return Environment.create(
+                            visit(ast.getLeft()).getValue().toString() + visit(ast.getRight()).getValue().toString()
+                    );
+                }
+                //if both operands are BigInteger, add
+                else if (visit(ast.getLeft()).getValue().getClass() == BigInteger.class && visit(ast.getLeft()).getValue().getClass() == visit(ast.getRight()).getValue().getClass()) {
+                    BigInteger left = (BigInteger) visit(ast.getLeft()).getValue();
+                    BigInteger right = (BigInteger) visit(ast.getRight()).getValue();
+                    return Environment.create(left.add(right));
+                }
+                // //if both operands are BigDecimal, add
+                else if (visit(ast.getLeft()).getValue().getClass() == BigDecimal.class && visit(ast.getLeft()).getValue().getClass() == visit(ast.getRight()).getValue().getClass()) {
+                    BigDecimal left = (BigDecimal) visit(ast.getLeft()).getValue();
+                    BigDecimal right = (BigDecimal) visit(ast.getRight()).getValue();
+                    return Environment.create(left.add(right));
+                } else {
+                    throw new RuntimeException();
+                }
+            case "-":
+                if (visit(ast.getLeft()).getValue().getClass() == BigInteger.class && visit(ast.getLeft()).getValue().getClass() == visit(ast.getRight()).getValue().getClass()) {
+                    BigInteger left = (BigInteger) visit(ast.getLeft()).getValue();
+                    BigInteger right = (BigInteger) visit(ast.getRight()).getValue();
+                    return Environment.create(left.subtract(right));
+                } else if (visit(ast.getLeft()).getValue().getClass() == BigDecimal.class && visit(ast.getLeft()).getValue().getClass() == visit(ast.getRight()).getValue().getClass()) {
+                    BigDecimal left = (BigDecimal) visit(ast.getLeft()).getValue();
+                    BigDecimal right = (BigDecimal) visit(ast.getRight()).getValue();
+                    return Environment.create(left.subtract(right));
+                } else {
+                    throw new RuntimeException();
+                }
+            case "*":
+                if (visit(ast.getLeft()).getValue().getClass() == BigInteger.class && visit(ast.getLeft()).getValue().getClass() == visit(ast.getRight()).getValue().getClass()) {
+                    BigInteger left = (BigInteger) visit(ast.getLeft()).getValue();
+                    BigInteger right = (BigInteger) visit(ast.getRight()).getValue();
+                    return Environment.create(left.multiply(right));
+                } else if (visit(ast.getLeft()).getValue().getClass() == BigDecimal.class && visit(ast.getLeft()).getValue().getClass() == visit(ast.getRight()).getValue().getClass()) {
+                    BigDecimal left = (BigDecimal) visit(ast.getLeft()).getValue();
+                    BigDecimal right = (BigDecimal) visit(ast.getRight()).getValue();
+                    return Environment.create(left.multiply(right));
+                } else {
+                    throw new RuntimeException();
+                }
 
+            case "/":
+                if ((visit(ast.getLeft()).getValue().getClass() == BigInteger.class ||
+                        visit(ast.getLeft()).getValue().getClass() == BigDecimal.class) &&
+                        visit(ast.getLeft()).getValue().getClass() == visit(ast.getRight()).getValue().getClass()) {
+
+                    if (visit(ast.getRight()).getValue().getClass() == BigInteger.class) {
+                        BigInteger left = (BigInteger) visit(ast.getLeft()).getValue();
+                        BigInteger right = (BigInteger) visit(ast.getRight()).getValue();
+                        if (right.intValue() == 0) {
+                            throw new RuntimeException("NOOOOO");
+                        } else {
+                            return Environment.create(left.divide(right));
+                        }
+                    } else if (visit(ast.getRight()).getValue().getClass() == BigDecimal.class) {
+                        BigDecimal left = (BigDecimal) visit(ast.getLeft()).getValue();
+                        BigDecimal right = (BigDecimal) visit(ast.getRight()).getValue();
+                        if (right.compareTo(BigDecimal.ZERO) == 0) {
+                            throw new RuntimeException("NOOOOO");
+                        } else {
+                            return Environment.create(left.divide(right, RoundingMode.HALF_EVEN));
+                        }
+                    }
+                }
 
         }
         return Environment.NIL;
