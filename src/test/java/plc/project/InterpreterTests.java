@@ -41,9 +41,20 @@ final class InterpreterTests {
                         Arrays.asList(new Ast.Method("main", Arrays.asList(), Arrays.asList(
                                 new Ast.Stmt.Expression(new Ast.Expr.Binary("+",
                                         new Ast.Expr.Access(Optional.empty(), "x"),
-                                        new Ast.Expr.Access(Optional.empty(), "y")                                ))
+                                        new Ast.Expr.Access(Optional.empty(), "y")    ))
                         )))
-                ), Environment.NIL.getValue())
+                ), Environment.NIL.getValue()),
+                Arguments.of("Field Addition", new Ast.Source(
+                        Arrays.asList(
+                                new Ast.Field("x", Optional.of(new Ast.Expr.Literal(BigInteger.ONE))),
+                                new Ast.Field("y", Optional.of(new Ast.Expr.Literal(BigInteger.TEN)))
+                        ),
+                        Arrays.asList(new Ast.Method("main", Arrays.asList(), Arrays.asList(
+                                new Ast.Stmt.Return(new Ast.Expr.Binary("+",
+                                        new Ast.Expr.Access(Optional.empty(), "x"),
+                                        new Ast.Expr.Access(Optional.empty(), "y")    ))
+                        )))
+                ), BigInteger.valueOf(11)     )
         );
     }
 
