@@ -338,6 +338,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     public Environment.PlcObject visit(Ast.Expr.Function ast) {
         //throw new UnsupportedOperationException(); //TODO
         //create a list to hold arguments
+
         List<Environment.PlcObject> arguments = new ArrayList<Environment.PlcObject>();
         //loop through ast.getArguments
         for (Ast.Expr args: ast.getArguments()){
@@ -353,7 +354,9 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
         }else {
             //otherwise return the value of invoking the appropriate function in the current scope with the evaluated arguments.
-            return scope.lookupFunction(ast.getName(), arguments.size()).invoke(arguments);
+            Environment.Function function = scope.lookupFunction(ast.getName(), arguments.size());
+            scope = scope.getParent();
+            return function.invoke(arguments);
         }
 
     }

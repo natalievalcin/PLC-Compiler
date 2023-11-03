@@ -51,7 +51,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
         // 'LET' identifier (':' identifier)? ('=' expression)? ';
 
-        
+
 
         if (!ast.getTypeName().isPresent() && !ast.getValue().isPresent()) {
             throw new RuntimeException("Declaration must have type or value to infer type.");
@@ -131,7 +131,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {
-        throw new UnsupportedOperationException();  // TODO
+        // throw new UnsupportedOperationException();  // TODO
+        if (target != Environment.Type.COMPARABLE && type != target && target != Environment.Type.ANY)
+            throw new RuntimeException("Target type does not match type being used or assigned");
     }
 
 }

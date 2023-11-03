@@ -385,6 +385,46 @@ final class InterpreterTests {
         );
     }
 
+    @ParameterizedTest
+    @MethodSource
+    void testMethodScope(String test, Ast ast, Object expected) {
+        Scope scope = new Scope(null);
+        scope.defineFunction("Function", 1, args -> Environment.create("f"));
+        Scope object = new Scope(null);
+        object.defineFunction("Main", 0, args -> Environment.create("main"));
+
+        test(ast, expected, scope);
+    }
+    private static Stream<Arguments> testMethodScope() {
+        return Stream.of(
+                Arguments.of("Method Scope",
+                        new Ast.Source(
+                                Arrays.asList(
+                                        new Ast.Field("x", Optional.of(new Ast.Expr.Literal(BigInteger.ONE))),
+                                        new Ast.Field("y", Optional.of(new Ast.Expr.Literal(BigInteger.valueOf(2)))),
+                                        new Ast.Field("z", Optional.of(new Ast.Expr.Literal(BigInteger.valueOf(3))))),
+
+                                // Add returns
+                                // Check argument for f
+                                Arrays.asList(new Ast.Method("f", Arrays.asList("z"), Arrays.asList(
+                                                new Ast.Stmt.Return(
+                                                        new Ast.Expr.Binary("+",
+                                                                new Ast.Expr.Binary("+",
+                                                                        new Ast.Expr.Access(Optional.empty(), "x"),
+                                                                        new Ast.Expr.Access(Optional.empty(), "y")),
+                                                                new Ast.Expr.Access(Optional.empty(), "z"))))),
+                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(
+                                                new Ast.Stmt.Declaration("y", Optional.of(new Ast.Expr.Literal(BigInteger.valueOf(4)))),
+                                                new Ast.Stmt.Return(
+                                                        new Ast.Expr.Function(Optional.empty(), "f", Arrays.asList(new Ast.Expr.Literal(BigInteger.valueOf(5)))))))
+                                )
+                        ),
+                        // Expected result for the test case
+                        BigInteger.valueOf(8)
+                )
+        );
+    }
+
     private static Scope test(Ast ast, Object expected, Scope scope) {
         Interpreter interpreter = new Interpreter(scope);
         if (expected != null) {

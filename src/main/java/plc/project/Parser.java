@@ -60,7 +60,7 @@ public final class Parser {
      * Parses the {@code field} rule. This method should only be called if the
      * next tokens start a field, aka {@code LET}.
      */
-    //flied ::= 'LET' identifier ('=' expression)? ';'
+    //flied ::= 'LET' identifier ':' identifier ('=' expression)? ';'
     public Ast.Field parseField() throws ParseException {
         //if match LET
         match("LET");
