@@ -26,8 +26,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Source ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Source ast) { throw new UnsupportedOperationException();  // TODO
+
     }
 
     @Override
@@ -92,7 +92,10 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.For ast) {
-        throw new UnsupportedOperationException();  // TODO
+        // throw new UnsupportedOperationException();  // TODO
+        if (ast.getStatements().isEmpty())
+            throw new RuntimeException("Statements list is empty");
+        return null;
     }
 
     @Override
@@ -107,7 +110,37 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Literal ast) {
-        throw new UnsupportedOperationException();  // TODO
+        // throw new UnsupportedOperationException();  // TODO
+
+        // validates and set type NIL
+        if (ast.getLiteral() == Environment.NIL)
+            ast.setType(Environment.Type.NIL);
+        // validates and set type Boolean
+        else if (ast.getLiteral() instanceof Boolean)
+            ast.setType(Environment.Type.BOOLEAN);
+        // validates and set type Character
+        else if (ast.getLiteral() instanceof Character)
+            ast.setType(Environment.Type.CHARACTER);
+        // validates and set type String
+        else if (ast.getLiteral() instanceof String)
+            ast.setType(Environment.Type.STRING);
+        // validates and set type Integer
+        else if (ast.getLiteral() instanceof BigInteger) {
+            BigInteger value = (BigInteger) ast.getLiteral();
+            if (value.intValueExact() > Integer.MAX_VALUE || value.intValueExact() < Integer.MIN_VALUE)
+                throw new RuntimeException("Out of range of a Java int (32-bit signed int)");
+            ast.setType(Environment.Type.INTEGER);
+        }
+        // validates and set type Decimal
+        else if (ast.getLiteral() instanceof BigDecimal) {
+            BigDecimal value = (BigDecimal) ast.getLiteral();
+            if (value.doubleValue() > Double.MAX_VALUE || value.doubleValue() < Double.MIN_VALUE)
+                throw new RuntimeException("Out of range of a Java double (64-bit signed float)");
+            ast.setType(Environment.Type.DECIMAL);
+        }
+        else
+            throw new RuntimeException("Type is invalid");
+        return null;
     }
 
     @Override
