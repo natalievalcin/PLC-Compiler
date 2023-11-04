@@ -60,7 +60,7 @@ public final class Parser {
      * Parses the {@code field} rule. This method should only be called if the
      * next tokens start a field, aka {@code LET}.
      */
-    //flied ::= 'LET' identifier ':' identifier ('=' expression)? ';'
+    //field ::= 'LET' identifier ':' identifier ('=' expression)? ';'
     public Ast.Field parseField() throws ParseException {
         //if match LET
         match("LET");
@@ -74,6 +74,18 @@ public final class Parser {
             throw new ParseException("Should declare variable", tokens.get(0).getIndex());
         }
 
+        if (peek(":"))
+            match(":");
+        else
+            throw new ParseException("Need a colon", tokens.get(0).getIndex());
+
+        String typeName = "";
+        if (match(Token.Type.IDENTIFIER)) {
+            typeName = tokens.get(-1).getLiteral();
+        }
+        else
+            throw new ParseException("Need a type", tokens.get(0).getIndex());
+
         Optional<Ast.Expr> value = Optional.empty();
 
 
@@ -86,7 +98,7 @@ public final class Parser {
             // TODO: handle actual character index instead of -1
         }
 
-        return new Ast.Field(variableName, value);
+        return new Ast.Field(variableName, typeName, value);
 
 
 
