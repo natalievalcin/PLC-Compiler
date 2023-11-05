@@ -82,25 +82,89 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.Assignment ast) {
-        throw new UnsupportedOperationException();  // TODO
+        //throw new UnsupportedOperationException();  // TODO
+        if (ast.getReceiver().getClass() != Ast.Expr.Access.class){
+            throw new RuntimeException("Sos");
+        }
+        visit(ast.getReceiver());
+        visit(ast.getValue());
+
+        requireAssignable(ast.getReceiver().getType(), ast.getValue().getType());
+        return null;
+
     }
 
     @Override
     public Void visit(Ast.Stmt.If ast) {
-        throw new UnsupportedOperationException();  // TODO
+        //throw new UnsupportedOperationException();  // TODO
+        //check if the condition is not type Boolean
+        if(ast.getCondition().getType() != Environment.Type.BOOLEAN){
+            throw new RuntimeException();
+        }
+        //check if the thenStatements list is empty
+        if(ast.getThenStatements().isEmpty()){
+            throw new RuntimeException("No then");
+        }
+
+        visit(ast.getCondition());
+        //visit the then
+        for(Ast.Stmt then:  ast.getThenStatements()){
+            try{
+                scope = new Scope(scope);
+                visit(then);
+            }
+            finally {
+                scope = scope.getParent();
+            }
+        }
+        //visit else statements
+        for(Ast.Stmt elseStmt : ast.getElseStatements()){
+            try{
+                scope = new Scope(scope);
+                visit(elseStmt);
+            }
+            finally {
+                scope = scope.getParent();
+            }
+        }
+        return null;
+
     }
 
     @Override
     public Void visit(Ast.Stmt.For ast) {
-        // throw new UnsupportedOperationException();  // TODO
-        if (ast.getStatements().isEmpty())
-            throw new RuntimeException("Statements list is empty");
+        //throw new UnsupportedOperationException();  // TODO
+        //check if the value is not type IntegerIterable
+        if(ast.getValue().getType() != Environment.Type.INTEGER_ITERABLE){
+            throw new RuntimeException();
+        }
+        if(ast.getStatements().isEmpty()){
+            throw new RuntimeException("Statement list is empty");
+        }
+        visit(ast.getValue());
+        for(Ast.Stmt stmt : ast.getStatements()) {
+            try {
+                scope = new Scope(scope);
+                scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.INTEGER, Environment.NIL);
+            } finally {
+                scope = scope.getParent();
+            }
+        }
         return null;
     }
 
     @Override
     public Void visit(Ast.Stmt.While ast) {
-        throw new UnsupportedOperationException();  // TODO
+        //throw new UnsupportedOperationException();  // TODO
+        visit(ast.getCondition());
+        if(ast.getCondition().getType() != Environment.Type.BOOLEAN){
+            throw new RuntimeException();
+        }
+        scope = new Scope(scope);
+        for(Ast.Stmt stmt : ast.getStatements()){
+            visit(stmt);
+        }
+        return null;
     }
 
     @Override
@@ -145,17 +209,97 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Group ast) {
-        throw new UnsupportedOperationException();  // TODO
+        //throw new UnsupportedOperationException();  // TODO
+        if(ast.getExpression().getClass() != Ast.Expr.Binary.class){
+            throw new RuntimeException("Expected");
+        }
+        visit(ast.getExpression());
+        //setting its type to be the type of the contained expression
+        ast.setType(ast.getExpression().getType());
+
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expr.Binary ast) {
-        throw new UnsupportedOperationException();  // TODO
+        //throw new UnsupportedOperationException();  // TODO
+        String binaryOperator = ast.getOperator();
+        switch (binaryOperator) {
+            case ("AND"):
+                if(ast.getLeft().getType() == Environment.Type.BOOLEAN && ast.getRight().getType() == Environment.Type.BOOLEAN){
+                    ast.setType(Environment.Type.BOOLEAN);
+
+                }
+            case ("OR"):
+                if(ast.getLeft().getType() == Environment.Type.BOOLEAN && ast.getRight().getType() == Environment.Type.BOOLEAN){
+                    ast.setType(Environment.Type.BOOLEAN);
+                }
+                //requireAssignable(Environment.Type target, Environment.Type type)
+            case ("<"):
+                requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
+                requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
+                ast.setType(Environment.Type.BOOLEAN);
+            case ("<="):
+                requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
+                requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
+                ast.setType(Environment.Type.BOOLEAN);
+            case (">"):
+                requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
+                requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
+                ast.setType(Environment.Type.BOOLEAN);
+            case (">="):
+                requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
+                requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
+                ast.setType(Environment.Type.BOOLEAN);
+            case ("=="):
+                requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
+                requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
+                ast.setType(Environment.Type.BOOLEAN);
+            case ("!="):
+                requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
+                requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
+                ast.setType(Environment.Type.BOOLEAN);
+            case ("+"):
+                if(ast.getLeft().getType() == Environment.Type.STRING || ast.getRight().getType() == Environment.Type.STRING){
+                    ast.setType(Environment.Type.STRING);
+                } else if (ast.getLeft().getType() == Environment.Type.INTEGER || ast.getLeft().getType() == Environment.Type.DECIMAL) {
+                    if (ast.getLeft().getType() != ast.getRight().getType()) {
+                        throw new RuntimeException("-.-");
+                    }
+                    ast.setType(ast.getLeft().getType());
+                }
+                else {
+                    throw new RuntimeException("-.-");
+                }
+            case ("-"):
+                if(ast.getLeft().getType() == Environment.Type.INTEGER || ast.getRight().getType() == Environment.Type.DECIMAL){
+                    ast.setType(ast.getLeft().getType());
+                }
+            case ("*"):
+                if(ast.getLeft().getType() == Environment.Type.INTEGER || ast.getRight().getType() == Environment.Type.DECIMAL){
+                    ast.setType(ast.getLeft().getType());
+                }
+            case ("/"):
+                if(ast.getLeft().getType() == Environment.Type.INTEGER || ast.getRight().getType() == Environment.Type.DECIMAL){
+                    ast.setType(ast.getLeft().getType());
+                }
+
+        }
+        return null;
+
     }
 
     @Override
     public Void visit(Ast.Expr.Access ast) {
-        throw new UnsupportedOperationException();  // TODO
+        //throw new UnsupportedOperationException();  // TODO
+        if(ast.getReceiver().isPresent()){
+            visit(ast.getReceiver().get());
+            ast.setVariable(ast.getReceiver().get().getType().getField(ast.getName()));
+        }
+        else{
+            ast.setVariable(scope.lookupVariable(ast.getName()));
+        }
+        return null;
     }
 
     @Override
