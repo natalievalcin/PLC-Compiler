@@ -42,7 +42,14 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.Expression ast) {
-        throw new UnsupportedOperationException();  // TODO
+        // throw new UnsupportedOperationException();  // TODO
+        //check if the expression is not Ast.Expr.Function
+        if (ast.getExpression().getClass() != Ast.Expr.Function.class) {
+            throw new RuntimeException();
+        }
+        visit(ast.getExpression());
+        return null;
+
     }
 
     @Override
