@@ -32,7 +32,23 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Field ast) {
-        throw new UnsupportedOperationException();  // TODO
+        //throw new UnsupportedOperationException();  // TODO
+        try {
+            // if value of the field is present
+            if (ast.getValue().isPresent()) {
+                // must be visited before the variable is defined
+                visit(ast.getValue().get());
+                requireAssignable(Environment.getType(ast.getTypeName()), ast.getValue().get().getType());
+                scope.defineVariable(ast.getName(), ast.getName(), ast.getValue().get().getType(), Environment.NIL);
+                ast.setVariable(scope.lookupVariable(ast.getName()));
+            }
+            else {
+                scope.defineVariable(ast.getName(), ast.getName(), Environment.getType(ast.getTypeName()), Environment.NIL);
+            }
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+        return null;
     }
 
     @Override
@@ -50,8 +66,6 @@ public final class Analyzer implements Ast.Visitor<Void> {
         // throw new UnsupportedOperationException();  // TODO
 
         // 'LET' identifier (':' identifier)? ('=' expression)? ';
-
-
 
         if (!ast.getTypeName().isPresent() && !ast.getValue().isPresent()) {
             throw new RuntimeException("Declaration must have type or value to infer type.");

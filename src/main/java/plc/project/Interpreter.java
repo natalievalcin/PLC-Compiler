@@ -19,6 +19,11 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             System.out.println(args.get(0).getValue());
             return Environment.NIL;
         });
+        scope.defineFunction("log", 1, args -> {
+            System.out.println(args.get(0).getValue());
+            return Environment.NIL;
+        });
+
     }
 
     public Scope getScope() {
@@ -355,7 +360,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         }else {
             //otherwise return the value of invoking the appropriate function in the current scope with the evaluated arguments.
             Environment.Function function = scope.lookupFunction(ast.getName(), arguments.size());
-            scope = scope.getParent();
+            if (scope.getParent() != null)
+                scope = scope.getParent();
             return function.invoke(arguments);
         }
 
