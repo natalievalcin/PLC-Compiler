@@ -2,6 +2,7 @@ package plc.project;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -53,11 +54,47 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Method ast) {
-        //you will need to coordinate with Ast.Stmt.Return so the expected return type is known
-        Environment.Type returnType = Environment.Type.NIL;
+        try{
+            /* The function's parameter types and return type are retrieved
+             from the environment using the corresponding names in the method.*/
+            List<Environment.Type> parameterTypes = new ArrayList<>();
+            for (String parameterTypeName : ast.getParameterTypeNames()) {
+                parameterTypes.add(Environment.getType(parameterTypeName));
+            }
+
+            Environment.Type returnType;
+            if (ast.getReturnTypeName().isPresent()) {
+                returnType = Environment.getType(ast.getReturnTypeName().get());
+            } else {
+                returnType = Environment.Type.NIL;
+            }
+
+            // Define the function in the current scope
+            ast.setFunction(scope.defineFunction(ast.getName(), ast.getName(), parameterTypes, returnType, args -> Environment.NIL));
+
+            // Create a new scope
+            scope = new Scope(scope);
+
+            // Define variables in the new scope for each parameter
+            for (int i = 0; i < ast.getParameters().size(); i++) {
+                String parameterName = ast.getParameters().get(i);
+                Environment.Type parameterType = parameterTypes.get(i);
+                scope.defineVariable(parameterName, parameterName, parameterType, Environment.NIL);
+            }
+
+            // Visit each statement in the method
+            for (Ast.Stmt stmt : ast.getStatements()) {
+                visit(stmt);
+            }
+        } finally {
+            // Restore the original scope
+            scope = scope.getParent();
+        }
 
         return null;
     }
+
+
 
     @Override
     public Void visit(Ast.Stmt.Expression ast) {
@@ -121,6 +158,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Stmt.If ast) {
         //throw new UnsupportedOperationException();  // TODO
+        //visit ast.getCondition()
+        visit(ast.getCondition());
         //check if the condition is not type Boolean
         if(ast.getCondition().getType() != Environment.Type.BOOLEAN){
             throw new RuntimeException();
@@ -129,16 +168,15 @@ public final class Analyzer implements Ast.Visitor<Void> {
         if(ast.getThenStatements().isEmpty()){
             throw new RuntimeException("No then");
         }
-
-        visit(ast.getCondition());
+        else{
         //visit the then
-        for(Ast.Stmt then:  ast.getThenStatements()){
-            try{
-                scope = new Scope(scope);
-                visit(then);
-            }
-            finally {
-                scope = scope.getParent();
+            for (Ast.Stmt then : ast.getThenStatements()) {
+                try {
+                    scope = new Scope(scope);
+                    visit(then);
+                } finally {
+                    scope = scope.getParent();
+                }
             }
         }
         //visit else statements
@@ -193,7 +231,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.Return ast) {
-        throw new UnsupportedOperationException();  // TODO
+        //throw new UnsupportedOperationException();  // TODO
+        visit(ast.getValue());
+
+        // Method needs to store this return type
+        Environment.Variable ret = scope.lookupVariable("returnType");
+        requireAssignable(ret.getType(), ast.getValue().getType());
+        return null;
     }
 
     @Override
@@ -347,8 +391,35 @@ return null;
 
     @Override
     public Void visit(Ast.Expr.Function ast) {
-       return null;
+        if (ast.getReceiver().isPresent()) {
+            //if there is a receiver
+            visit(ast.getReceiver().get());
+            //set the function
+            ast.setFunction(ast.getReceiver().get().getType().getMethod(ast.getName(), ast.getArguments().size()));
+
+            List<Environment.Type> parameterTypes = ast.getFunction().getParameterTypes();
+
+            for (int i = 0; i < ast.getArguments().size(); i++) {
+                visit(ast.getArguments().get(i));
+                requireAssignable(parameterTypes.get(i + 1), ast.getArguments().get(i).getType());
+            }
+        } else {
+            // If there is no receiver, set the function based on the current scope
+            ast.setFunction(scope.lookupFunction(ast.getName(), ast.getArguments().size()));
+
+            List<Environment.Type> parameterTypes = ast.getFunction().getParameterTypes();
+
+            for (int i = 0; i < ast.getArguments().size(); i++) {
+                visit(ast.getArguments().get(i));
+                //System.out.println("Print out to see" + ast.getArguments().get(i) );
+                requireAssignable(parameterTypes.get(i), ast.getArguments().get(i).getType());
+            }
+        }
+
+        return null;
     }
+
+
 
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {
