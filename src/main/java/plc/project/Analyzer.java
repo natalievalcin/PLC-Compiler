@@ -53,7 +53,10 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Method ast) {
-        throw new UnsupportedOperationException();  // TODO
+        //you will need to coordinate with Ast.Stmt.Return so the expected return type is known
+        Environment.Type returnType = Environment.Type.NIL;
+
+        return null;
     }
 
     @Override
@@ -244,42 +247,56 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Expr.Binary ast) {
         //throw new UnsupportedOperationException();  // TODO
+        visit(ast.getLeft());
+        visit(ast.getRight());
         String binaryOperator = ast.getOperator();
         switch (binaryOperator) {
             case ("AND"):
-                if(ast.getLeft().getType() == Environment.Type.BOOLEAN && ast.getRight().getType() == Environment.Type.BOOLEAN){
+                if (ast.getLeft().getType() == Environment.Type.BOOLEAN && ast.getRight().getType() == Environment.Type.BOOLEAN) {
                     ast.setType(Environment.Type.BOOLEAN);
-
+                } else {
+                    throw new RuntimeException("Invalid");
                 }
+                break;
             case ("OR"):
                 if(ast.getLeft().getType() == Environment.Type.BOOLEAN && ast.getRight().getType() == Environment.Type.BOOLEAN){
                     ast.setType(Environment.Type.BOOLEAN);
                 }
+                else {
+                    throw  new RuntimeException("Invalid");
+                }
+                break;
                 //requireAssignable(Environment.Type target, Environment.Type type)
             case ("<"):
                 requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
                 requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
                 ast.setType(Environment.Type.BOOLEAN);
+                break;
             case ("<="):
                 requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
                 requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
                 ast.setType(Environment.Type.BOOLEAN);
+                break;
             case (">"):
                 requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
                 requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
                 ast.setType(Environment.Type.BOOLEAN);
+                break;
             case (">="):
                 requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
                 requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
                 ast.setType(Environment.Type.BOOLEAN);
+                break;
             case ("=="):
                 requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
                 requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
                 ast.setType(Environment.Type.BOOLEAN);
+                break;
             case ("!="):
                 requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
                 requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
                 ast.setType(Environment.Type.BOOLEAN);
+                break;
             case ("+"):
                 if(ast.getLeft().getType() == Environment.Type.STRING || ast.getRight().getType() == Environment.Type.STRING){
                     ast.setType(Environment.Type.STRING);
@@ -292,22 +309,27 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 else {
                     throw new RuntimeException("-.-");
                 }
+                break;
             case ("-"):
                 if(ast.getLeft().getType() == Environment.Type.INTEGER || ast.getRight().getType() == Environment.Type.DECIMAL){
                     ast.setType(ast.getLeft().getType());
                 }
+                break;
             case ("*"):
                 if(ast.getLeft().getType() == Environment.Type.INTEGER || ast.getRight().getType() == Environment.Type.DECIMAL){
                     ast.setType(ast.getLeft().getType());
                 }
+                break;
             case ("/"):
                 if(ast.getLeft().getType() == Environment.Type.INTEGER || ast.getRight().getType() == Environment.Type.DECIMAL){
                     ast.setType(ast.getLeft().getType());
                 }
+                break;
+            default:
+                return null;
 
         }
-        return null;
-
+return null;
     }
 
     @Override
@@ -325,8 +347,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Function ast) {
-        throw new UnsupportedOperationException();  // TODO
+       return null;
     }
+
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {
         // throw new UnsupportedOperationException();  // TODO
