@@ -45,6 +45,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             }
             else {
                 scope.defineVariable(ast.getName(), ast.getName(), Environment.getType(ast.getTypeName()), Environment.NIL);
+                ast.setVariable(scope.lookupVariable(ast.getName()));
             }
         } catch (RuntimeException e) {
             throw new RuntimeException(e);

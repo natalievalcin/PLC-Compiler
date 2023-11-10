@@ -61,11 +61,65 @@ public final class AnalyzerTests {
                                 )
                         ),
                         null
+                ),
+                // LET num: Integer = 1; DEF main(): Integer DO print(num + 1.0); END
+                Arguments.of("Invalid Field Use",
+                        new Ast.Source(
+                                Arrays.asList(
+                                        new Ast.Field("num", "Integer", Optional.of(new Ast.Expr.Literal(BigInteger.ONE)))
+                                ),
+                                Arrays.asList(
+                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"), Arrays.asList(
+                                                new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "print", Arrays.asList(
+                                                     new Ast.Expr.Binary("+",
+                                                             new Ast.Expr.Access(Optional.empty(), "num"),
+                                                             new Ast.Expr.Literal(BigDecimal.valueOf(1.0)))
+                                                )))
+                                        ))
+                                )
+                        ),
+                        null
+                ),
+                // DEF main() DO print("Hello, World!); END
+                Arguments.of("Invalid Return Type",
+                        new Ast.Source(
+                                Arrays.asList(),
+                                Arrays.asList(
+                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.empty(), Arrays.asList(
+                                                new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "print", Arrays.asList(
+                                                      new Ast.Expr.Literal("Hello, World!")
+                                                )))
+                                        ))
+                                )
+                        ),
+                        null
                 )
         );
     }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testField(String test, Ast.Field ast, Ast.Field expected) {
+        Analyzer analyzer = test(ast, expected, new Scope(null));
+        if (expected != null) {
+            Assertions.assertEquals(expected.getName(), ast.getName());
+            Assertions.assertEquals(expected.getTypeName(), ast.getTypeName());
+            Assertions.assertEquals(expected.getValue(), ast.getValue());
+            Assertions.assertEquals(expected.getVariable(), ast.getVariable());
+        }
+    }
 
+    private static Stream<Arguments> testField() {
+        return Stream.of(
+                Arguments.of("Declaration",
+                        // LET name: Integer;
+                        new Ast.Field("name", "Integer", Optional.empty()),
+                        init(new Ast.Field("name", "Integer", Optional.empty()), ast -> {
+                            ast.setVariable(new Environment.Variable("name", "name", Environment.Type.INTEGER, Environment.NIL));
+                        })
+                )
+        );
+    }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
