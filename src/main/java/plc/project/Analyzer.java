@@ -27,8 +27,28 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Source ast) { throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Source ast) { // throw new UnsupportedOperationException();  // TODO
+        if (!ast.getFields().isEmpty()) {
+            for (Ast.Field field : ast.getFields())
+                visit(field);
+        }
 
+        boolean main = false;
+        if (!ast.getMethods().isEmpty()) {
+            for (Ast.Method method : ast.getMethods())
+                visit(method);
+            for (Ast.Method method : ast.getMethods()) {
+                Ast.Method temp = method;
+                if (temp.getName().equals("main") && temp.getReturnTypeName().get().equals("Integer") && temp.getParameters().isEmpty()) {
+                    main = true;
+                }
+            }
+        }
+        if (!main) {
+            // System.out.println("NO MAIN PRESENT!");
+            throw new RuntimeException("No main method does not exist");
+        }
+        return null;
     }
 
     @Override
