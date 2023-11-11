@@ -45,8 +45,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             }
         }
         if (!main) {
-            // System.out.println("NO MAIN PRESENT!");
-            throw new RuntimeException("No main method does not exist");
+            throw new RuntimeException("Main method does not exist");
         }
         return null;
     }
