@@ -33,7 +33,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 for (Ast.Field field : ast.getFields())
                     visit(field);
             }
-
+// check to see if the main type exist before anything
             boolean main = false;
             if (!ast.getMethods().isEmpty()) {
                 for (Ast.Method method : ast.getMethods())

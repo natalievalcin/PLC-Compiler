@@ -69,6 +69,8 @@ public final class Generator implements Ast.Visitor<Void> {
         for (int i = 0; i < ast.getMethods().size(); i++) {
             newline(indent);
             print(ast.getMethods().get(i));
+            // get the type and the name of the function. print out before printing out the statements in the method
+            // can do it in this function or the method function
         }
         newline(0);
         indent--;
@@ -83,13 +85,41 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Field ast) {
         //throw new UnsupportedOperationException(); //TODO
+        if (ast.getTypeName().equals("Integer")) {
+            print("int");
+        }
         return null;
     }
 
     @Override
     public Void visit(Ast.Method ast) {
         //throw new UnsupportedOperationException(); //TODO
+        print(ast.getFunction().getReturnType().getJvmName());
+        print(" ");
+        print(ast.getFunction().getName());
+        print("(");
+        for (int i = 0; i < ast.getParameters().size(); i++) {
+            print(ast.getParameterTypeNames().get(i));
+            print(" ");
+            print(ast.getParameters().get(i));
+            if (i != ast.getParameters().size() - 1)
+                print(", ");
+        }
+        print(") {");
+
+        if (!ast.getStatements().isEmpty()) {
+            indent++;
+            for (int i = 0; i < ast.getStatements().size(); i++) {
+                newline(indent);
+                print(ast.getStatements().get(i));
+            }
+            indent--;
+            newline(indent);
+        }
+        print("}");
+
         return null;
+
     }
 
     @Override
