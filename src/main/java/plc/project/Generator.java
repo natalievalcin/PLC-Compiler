@@ -1,6 +1,8 @@
 package plc.project;
 
 import java.io.PrintWriter;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public final class Generator implements Ast.Visitor<Void> {
 
@@ -185,13 +187,15 @@ public final class Generator implements Ast.Visitor<Void> {
 
         print(" else {");
         indent++;
-        for (int j = 0; j < ast.getElseStatements().size(); j++){
+
+            for (int j = 0; j < ast.getElseStatements().size(); j++) {
+                newline(indent);
+                print(ast.getElseStatements().get(j));
+            }
+            indent--;
             newline(indent);
-            print(ast.getElseStatements().get(j));
-        }
-        indent--;
-        newline(indent);
-        print("}");
+            print("}");
+
         return null;
     }
 
@@ -249,6 +253,24 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Expr.Literal ast) {
         //throw new UnsupportedOperationException(); //TODO
+        if(ast.getType() == Environment.Type.CHARACTER){
+            print("'");
+            ast.getLiteral();
+            print("\"");
+        }
+        else if(ast.getType() == Environment.Type.STRING){
+            print("\"");
+            print(ast.getLiteral());
+            print("\"");
+        } else if (ast.getType() == Environment.Type.DECIMAL) {
+            BigDecimal bigDecimal = BigDecimal.class.cast(ast.getLiteral());
+            print(bigDecimal.doubleValue());
+        } else if (ast.getType() == Environment.Type.INTEGER) {
+            BigInteger bigInteger = BigInteger.class.cast(ast.getLiteral());
+            print(bigInteger.intValue());
+        }else {
+            print(ast.getLiteral());
+        }
         return null;
     }
 
@@ -292,6 +314,20 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Expr.Function ast) {
         //throw new UnsupportedOperationException(); //TODO
+        if(ast.getReceiver().isPresent()){
+            print(ast.getReceiver().get());
+            print(".");
+        }
+        print(ast.getFunction().getJvmName());
+        print("(");
+
+        for(int i = 0; i < ast.getArguments().size(); i++){
+            print(ast.getArguments().get(i));
+            if(i != ast.getArguments().size()-1){
+                print(", ");
+            }
+        }
+        print(")");
         return null;
     }
 
