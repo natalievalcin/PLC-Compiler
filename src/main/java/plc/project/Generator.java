@@ -30,41 +30,78 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Source ast) {
-        throw new UnsupportedOperationException(); //TODO
+        //throw new UnsupportedOperationException(); //TODO
         // create a "class Main {"
+        print("public class Main {");
+        newline(0);
+        indent++; // 4 spaces
 
-        // declare fields
+        //      declare fields
+        if (!ast.getFields().isEmpty()) {
+            for (int i = 0; i < ast.getFields().size(); i++) {
+                newline(indent);
+                print(ast.getFields().get(i));
+            }
+            newline(0);
+        }
 
-        // declare "public static void main(String[] args)
+        //      declare "public static void main(String[] args) {
+        newline(indent);
+        print("public static void main(String[] args) {");
+        indent++; // 8 spaces
+        //                   System.exit(new Main().main());
+        newline(indent);
+        print("System.exit(new Main().main());");
+        indent--; // 4 spaces
 
-        //          }"
+        //               }"
+        newline(indent);
+        print("}");
 
+        //      declare each of our methods
+        //      one of our methods is called main()!
+        newline(0);
+//        newline(indent);
+//
+//        print("int main() {");
+//
+//        indent++;
+        for (int i = 0; i < ast.getMethods().size(); i++) {
+            newline(indent);
+            print(ast.getMethods().get(i));
+        }
+        newline(0);
+        indent--;
 
-        //return null;
+        //      print "}" to close the class Main
+        newline(indent);
+        print("}");
+
+        return null;
     }
 
     @Override
     public Void visit(Ast.Field ast) {
-        throw new UnsupportedOperationException(); //TODO
-        //return null;
+        //throw new UnsupportedOperationException(); //TODO
+        return null;
     }
 
     @Override
     public Void visit(Ast.Method ast) {
-        throw new UnsupportedOperationException(); //TODO
-        //return null;
+        //throw new UnsupportedOperationException(); //TODO
+        return null;
     }
 
     @Override
     public Void visit(Ast.Stmt.Expression ast) {
-        throw new UnsupportedOperationException(); //TODO
-        //return null;
+        //throw new UnsupportedOperationException(); //TODO
+        return null;
     }
 
     @Override
     public Void visit(Ast.Stmt.Declaration ast) {
-        throw new UnsupportedOperationException(); //TODO
-        //return null;
+        //throw new UnsupportedOperationException(); //TODO
+        return null;
     }
 
     @Override
@@ -75,8 +112,8 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.If ast) {
-        throw new UnsupportedOperationException(); //TODO
-        //return null;
+        //throw new UnsupportedOperationException(); //TODO
+        return null;
     }
 
     @Override
@@ -87,32 +124,32 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.While ast) {
-        throw new UnsupportedOperationException(); //TODO
-        //return null;
+        //throw new UnsupportedOperationException(); //TODO
+        return null;
     }
 
     @Override
     public Void visit(Ast.Stmt.Return ast) {
-        throw new UnsupportedOperationException(); //TODO
-        //return null;
+        //throw new UnsupportedOperationException(); //TODO
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expr.Literal ast) {
-        throw new UnsupportedOperationException(); //TODO
-        //return null;
+        //throw new UnsupportedOperationException(); //TODO
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expr.Group ast) {
-        throw new UnsupportedOperationException(); //TODO
-        //return null;
+        //throw new UnsupportedOperationException(); //TODO
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expr.Binary ast) {
-        throw new UnsupportedOperationException(); //TODO
-        //return null;
+        //throw new UnsupportedOperationException(); //TODO
+        return null;
     }
 
     @Override
@@ -123,8 +160,8 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Function ast) {
-        throw new UnsupportedOperationException(); //TODO
-        //return null;
+        //throw new UnsupportedOperationException(); //TODO
+        return null;
     }
 
 }
