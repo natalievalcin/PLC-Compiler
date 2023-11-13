@@ -161,7 +161,6 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Stmt.If ast) {
         //throw new UnsupportedOperationException(); //TODO
-        print()
         return null;
     }
 
@@ -174,6 +173,22 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Stmt.While ast) {
         //throw new UnsupportedOperationException(); //TODO
+        print("while (");
+        print(ast.getCondition());
+        print(") {");
+
+        if (!ast.getStatements().isEmpty())
+        {
+            indent++;
+            for (int i = 0; i < ast.getStatements().size(); i++)
+            {
+                newline(indent+1);
+                print(ast.getStatements().get(i));
+            }
+            indent--;
+            newline(indent);
+            print("}");
+        } else print("}");
         return null;
     }
 
