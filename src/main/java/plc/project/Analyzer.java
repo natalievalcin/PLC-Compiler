@@ -28,24 +28,28 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Source ast) { // throw new UnsupportedOperationException();  // TODO
-        if (!ast.getFields().isEmpty()) {
-            for (Ast.Field field : ast.getFields())
-                visit(field);
-        }
+        try {
+            if (!ast.getFields().isEmpty()) {
+                for (Ast.Field field : ast.getFields())
+                    visit(field);
+            }
 
-        boolean main = false;
-        if (!ast.getMethods().isEmpty()) {
-            for (Ast.Method method : ast.getMethods())
-                visit(method);
-            for (Ast.Method method : ast.getMethods()) {
-                Ast.Method temp = method;
-                if (temp.getName().equals("main") && temp.getReturnTypeName().get().equals("Integer") && temp.getParameters().isEmpty()) {
-                    main = true;
+            boolean main = false;
+            if (!ast.getMethods().isEmpty()) {
+                for (Ast.Method method : ast.getMethods())
+                    visit(method);
+                for (Ast.Method method : ast.getMethods()) {
+                    Ast.Method temp = method;
+                    if (temp.getName().equals("main") && temp.getReturnTypeName().get().equals("Integer") && temp.getParameters().isEmpty()) {
+                        main = true;
+                    }
                 }
             }
-        }
-        if (!main) {
-            throw new RuntimeException("Main method does not exist");
+            if (!main) {
+                throw new RuntimeException("Main method does not exist");
+            }
+        } catch (RuntimeException exception) {
+            throw new RuntimeException(exception);
         }
         return null;
     }
@@ -181,9 +185,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
         //visit ast.getCondition()
         visit(ast.getCondition());
         //check if the condition is not type Boolean
-        if(ast.getCondition().getType() != Environment.Type.BOOLEAN){
-            throw new RuntimeException();
-        }
+        requireAssignable(Environment.Type.BOOLEAN, ast.getCondition().getType());
+
         //check if the thenStatements list is empty
         if(ast.getThenStatements().isEmpty()){
             throw new RuntimeException("No then");
@@ -238,13 +241,24 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Stmt.While ast) {
         //throw new UnsupportedOperationException();  // TODO
+//        visit(ast.getCondition());
+//        if(ast.getCondition().getType() != Environment.Type.BOOLEAN){
+//            throw new RuntimeException();
+//        }
+//        scope = new Scope(scope);
+//        for(Ast.Stmt stmt : ast.getStatements()){
+//            visit(stmt);
+//        }
+//        return null;
         visit(ast.getCondition());
-        if(ast.getCondition().getType() != Environment.Type.BOOLEAN){
-            throw new RuntimeException();
-        }
-        scope = new Scope(scope);
-        for(Ast.Stmt stmt : ast.getStatements()){
-            visit(stmt);
+        requireAssignable(Environment.Type.BOOLEAN, ast.getCondition().getType());
+        try {
+            scope = new Scope(scope);
+            for (Ast.Stmt stmt : ast.getStatements()){
+                visit(stmt);
+            }
+        } finally {
+            scope = scope.getParent();
         }
         return null;
     }
@@ -375,17 +389,26 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 }
                 break;
             case ("-"):
-                if(ast.getLeft().getType() == Environment.Type.INTEGER || ast.getRight().getType() == Environment.Type.DECIMAL){
+                if(ast.getLeft().getType() == Environment.Type.INTEGER || ast.getLeft().getType() == Environment.Type.DECIMAL){
+                    if (ast.getLeft().getType() != ast.getRight().getType()) {
+                        throw new RuntimeException("The right hand side and result type are not the same as the left");
+                    }
                     ast.setType(ast.getLeft().getType());
                 }
                 break;
             case ("*"):
-                if(ast.getLeft().getType() == Environment.Type.INTEGER || ast.getRight().getType() == Environment.Type.DECIMAL){
+                if(ast.getLeft().getType() == Environment.Type.INTEGER || ast.getLeft().getType() == Environment.Type.DECIMAL){
+                    if (ast.getLeft().getType() != ast.getRight().getType()) {
+                        throw new RuntimeException("The right hand side and result type are not the same as the left");
+                    }
                     ast.setType(ast.getLeft().getType());
                 }
                 break;
             case ("/"):
-                if(ast.getLeft().getType() == Environment.Type.INTEGER || ast.getRight().getType() == Environment.Type.DECIMAL){
+                if(ast.getLeft().getType() == Environment.Type.INTEGER || ast.getLeft().getType() == Environment.Type.DECIMAL){
+                    if (ast.getLeft().getType() != ast.getRight().getType()) {
+                        throw new RuntimeException("The right hand side and result type are not the same as the left");
+                    }
                     ast.setType(ast.getLeft().getType());
                 }
                 break;
@@ -393,7 +416,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 return null;
 
         }
-return null;
+        return null;
     }
 
     @Override
