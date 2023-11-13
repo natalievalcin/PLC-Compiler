@@ -139,12 +139,22 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Stmt.Expression ast) {
         //throw new UnsupportedOperationException(); //TODO
+        print(ast.getExpression());
+        print(";");
         return null;
     }
 
     @Override
     public Void visit(Ast.Stmt.Declaration ast) {
         //throw new UnsupportedOperationException(); //TODO
+        print(ast.getVariable().getType().getJvmName());
+        print(" ");
+        print(ast.getVariable().getJvmName());
+        if(ast.getValue().isPresent()){
+            print(" = ");
+            print(ast.getValue().get());
+        }
+        print(";");
         return null;
     }
 
@@ -161,13 +171,48 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Stmt.If ast) {
         //throw new UnsupportedOperationException(); //TODO
+        print("if (");
+        print(ast.getCondition());
+        print(") {");
+        indent++;
+        for(int i = 0; i < ast.getThenStatements().size(); i++){
+            newline(indent);
+            print(ast.getThenStatements().get(i));
+        }
+        indent--;
+        newline(indent);
+        print("}");
+
+        print(" else {");
+        indent++;
+        for (int j = 0; j < ast.getElseStatements().size(); j++){
+            newline(indent);
+            print(ast.getElseStatements().get(j));
+        }
+        indent--;
+        newline(indent);
+        print("}");
         return null;
     }
 
     @Override
     public Void visit(Ast.Stmt.For ast) {
-        throw new UnsupportedOperationException(); //TODO
-        //return null;
+        //throw new UnsupportedOperationException(); //TODO
+        print("for (");
+        print("int ");
+        print(ast.getName());
+        print(" : ");
+        print(ast.getValue());
+        print(") {");
+        indent++;
+        for(int i = 0; i < ast.getStatements().size(); i++){
+            newline(indent);
+            print(ast.getStatements().get(i));
+        }
+        indent--;
+        newline(indent);
+        print("}");
+        return null;
     }
 
     @Override
