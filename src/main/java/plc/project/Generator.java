@@ -61,21 +61,17 @@ public final class Generator implements Ast.Visitor<Void> {
         //      declare each of our methods
         //      one of our methods is called main()!
         newline(0);
-//        newline(indent);
-//
-//        print("int main() {");
-//
-//        indent++;
+
         for (int i = 0; i < ast.getMethods().size(); i++) {
             newline(indent);
             print(ast.getMethods().get(i));
+
+            // Max advised in OH 11/13:
             // get the type and the name of the function. print out before printing out the statements in the method
             // can do it in this function or the method function
         }
         newline(0);
         indent--;
-
-        //      print "}" to close the class Main
         newline(indent);
         print("}");
 
@@ -85,12 +81,30 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Field ast) {
         //throw new UnsupportedOperationException(); //TODO
-        if (ast.getTypeName().equals("Integer")) {
+        if (ast.getTypeName().equals("Integer"))
             print("int");
+        else if (ast.getTypeName().equals("String"))
+            print("String");
+        else if (ast.getTypeName().equals("Boolean"))
+            print("boolean");
+        else if (ast.getTypeName().equals("Character"))
+            print("char");
+        else if (ast.getTypeName().equals("Decimal"))
+            print("double");
+        print(" ");
+        print(ast.getName());
+        if (ast.getValue().isPresent()) {
+            print(" = ");
+            print(ast.getValue().get());
         }
+        print(";");
+
         return null;
     }
 
+    // Max advised in OH 11/13:
+    // get the type and the name of the function. print out before printing out the statements in the method
+    // can do it in this function or the method function
     @Override
     public Void visit(Ast.Method ast) {
         //throw new UnsupportedOperationException(); //TODO
