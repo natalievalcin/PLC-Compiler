@@ -220,13 +220,14 @@ public final class Analyzer implements Ast.Visitor<Void> {
     public Void visit(Ast.Stmt.For ast) {
         //throw new UnsupportedOperationException();  // TODO
         //check if the value is not type IntegerIterable
+        visit(ast.getValue());
         if(ast.getValue().getType() != Environment.Type.INTEGER_ITERABLE){
             throw new RuntimeException();
         }
         if(ast.getStatements().isEmpty()){
             throw new RuntimeException("Statement list is empty");
         }
-        visit(ast.getValue());
+
         for(Ast.Stmt stmt : ast.getStatements()) {
             try {
                 scope = new Scope(scope);
