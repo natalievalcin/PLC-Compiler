@@ -29,24 +29,28 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Source ast) { // throw new UnsupportedOperationException();  // TODO
         try {
+            boolean main = false;
+
+            for (Ast.Method method : ast.getMethods()) {
+                // check if it is empty first; can include inn the if
+                if (method.getName().equals("main") && method.getReturnTypeName().get().equals("Integer") && method.getParameters().isEmpty()) {
+                    main = true;
+                }
+            }
+
+            if (!main) {
+                throw new RuntimeException("Main method does not exist");
+            }
+
             if (!ast.getFields().isEmpty()) {
                 for (Ast.Field field : ast.getFields())
                     visit(field);
             }
 // check to see if the main type exist before anything
-            boolean main = false;
+
             if (!ast.getMethods().isEmpty()) {
                 for (Ast.Method method : ast.getMethods())
                     visit(method);
-                for (Ast.Method method : ast.getMethods()) {
-                    Ast.Method temp = method;
-                    if (temp.getName().equals("main") && temp.getReturnTypeName().get().equals("Integer") && temp.getParameters().isEmpty()) {
-                        main = true;
-                    }
-                }
-            }
-            if (!main) {
-                throw new RuntimeException("Main method does not exist");
             }
         } catch (RuntimeException exception) {
             throw new RuntimeException(exception);
@@ -294,7 +298,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
         // validates and set type Integer
         else if (ast.getLiteral() instanceof BigInteger) {
             BigInteger value = (BigInteger) ast.getLiteral();
-            if (value.intValueExact() > Integer.MAX_VALUE || value.intValueExact() < Integer.MIN_VALUE)
+            // the intvalueexact didnt throw errors it was always going to be true because by default it converts it to an int
+
+            if (value.longValueExact() > Integer.MAX_VALUE || value.longValueExact() < Integer.MIN_VALUE)
                 throw new RuntimeException("Out of range of a Java int (32-bit signed int)");
             ast.setType(Environment.Type.INTEGER);
         }
