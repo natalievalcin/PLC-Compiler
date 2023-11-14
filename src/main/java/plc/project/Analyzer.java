@@ -225,9 +225,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         //throw new UnsupportedOperationException();  // TODO
         //check if the value is not type IntegerIterable
         visit(ast.getValue());
-        if(ast.getValue().getType() != Environment.Type.INTEGER_ITERABLE){
-            throw new RuntimeException();
-        }
+        requireAssignable(Environment.Type.INTEGER_ITERABLE, ast.getValue().getType());
         if(ast.getStatements().isEmpty()){
             throw new RuntimeException("Statement list is empty");
         }
