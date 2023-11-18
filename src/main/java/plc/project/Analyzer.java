@@ -29,6 +29,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Source ast) { // throw new UnsupportedOperationException();  // TODO
         try {
+            // comment to see if why git file is not there
             boolean main = false;
 
             for (Ast.Method method : ast.getMethods()) {
