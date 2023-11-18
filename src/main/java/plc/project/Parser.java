@@ -108,7 +108,7 @@ public final class Parser {
      * Parses the {@code method} rule. This method should only be called if the
      * next tokens start a method, aka {@code DEF}.
      */
-    //method ::= 'DEF' identifier '(' (identifier (',' identifier)*)? ')' 'DO' statement* 'END'
+    //method ::= 'DEF' identifier '(' (identifier ':' identifier (',' identifier ':' identifier)* )? ')' (':' identifier)? 'DO' statement* 'END'
 
     public Ast.Method parseMethod() throws ParseException {
         match("DEF");
@@ -131,12 +131,24 @@ public final class Parser {
             while (match(Token.Type.IDENTIFIER)) {
                 parameters.add(tokens.get(-1).getLiteral());
 
+                if (peek(":"))
+                    match(":");
+                else
+                    throw new ParseException("Need a colon", tokens.get(0).getIndex());
+
                 if(peek(",")){
                     match(",");
                 }
                 else {
                     throw new ParseException("No", tokens.get(0).getIndex());
                 }
+
+                String typeName = "";
+                if (match(Token.Type.IDENTIFIER)) {
+                    typeName = tokens.get(-1).getLiteral();
+                }
+                else
+                    throw new ParseException("Need a type", tokens.get(0).getIndex());
             }
 
 
