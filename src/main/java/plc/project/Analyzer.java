@@ -230,14 +230,18 @@ public final class Analyzer implements Ast.Visitor<Void> {
         if(ast.getStatements().isEmpty()){
             throw new RuntimeException("Statement list is empty");
         }
-
-        for(Ast.Stmt stmt : ast.getStatements()) {
-            try {
-                scope = new Scope(scope);
-                scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.INTEGER, Environment.NIL);
-            } finally {
-                scope = scope.getParent();
+        /* citing Max (OH 11/17): move the creation of the new scope outside the for loop so
+        the scope only create once before loop starts.
+         */
+        try {
+            scope = new Scope(scope);
+            scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.INTEGER, Environment.NIL);
+            for(Ast.Stmt stmt : ast.getStatements()) {
+                visit(stmt);
             }
+        }
+        finally {
+            scope = scope.getParent();
         }
         return null;
     }
