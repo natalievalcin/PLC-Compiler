@@ -30,12 +30,12 @@ public final class Parser {
     //source ::= field* method*
     public Ast.Source parseSource() throws ParseException {
         //throw new UnsupportedOperationException(); //TODO
-            List<Ast.Field> fields = new ArrayList<Ast.Field>();
-            List<Ast.Method> methods = new ArrayList<Ast.Method>();
+        List<Ast.Field> fields = new ArrayList<Ast.Field>();
+        List<Ast.Method> methods = new ArrayList<Ast.Method>();
 
         // citing Max (OH 10/06): field/method may be multiples, so maybe think of adding a while loop;
         if (peek("LET")) {
-            while(peek("LET")) {
+            while (peek("LET")) {
                 fields.add(parseField());
                 if (tokens.has(0) && (!peek("LET") && !peek("DEF")))
                     throw new ParseException("Incorrect source: !LET || ! DEF", tokens.get(0).getIndex());
@@ -43,15 +43,16 @@ public final class Parser {
         }
 
         if (peek("DEF")) {
-            while(peek("DEF")) {
+            while (peek("DEF")) {
                 methods.add(parseMethod());
                 if (tokens.has(0) && !peek("DEF"))
                     throw new ParseException("Incorrect source: !DEF", tokens.get(0).getIndex());
             }
         }
 
-            return new Ast.Source(fields, methods);
+        return new Ast.Source(fields, methods);
     }
+
     /**
      * Parses the {@code field} rule. This method should only be called if the
      * next tokens start a field, aka {@code LET}.
@@ -62,11 +63,10 @@ public final class Parser {
         match("LET");
         //Declare variable
         String variableName = "";
-        if(match(Token.Type.IDENTIFIER)){
+        if (match(Token.Type.IDENTIFIER)) {
             variableName = tokens.get(-1).getLiteral();
 
-        }
-        else {
+        } else {
             throw new ParseException("Should declare variable", tokens.get(0).getIndex());
         }
 
@@ -78,8 +78,7 @@ public final class Parser {
         String typeName = "";
         if (match(Token.Type.IDENTIFIER)) {
             typeName = tokens.get(-1).getLiteral();
-        }
-        else
+        } else
             throw new ParseException("Need a type", tokens.get(0).getIndex());
 
         Optional<Ast.Expr> value = Optional.empty();
@@ -97,7 +96,6 @@ public final class Parser {
         return new Ast.Field(variableName, typeName, value);
 
 
-
     }
 
     /**
@@ -105,12 +103,14 @@ public final class Parser {
      * next tokens start a method, aka {@code DEF}.
      */
     //method ::= 'DEF' identifier '(' (identifier ':' identifier (',' identifier ':' identifier)* )? ')' (':' identifier)? 'DO' statement* 'END'
-
     public Ast.Method parseMethod() throws ParseException {
         match("DEF");
 
         String name = "";
         List<String> parameters = new ArrayList<>();
+        List<String> types = new ArrayList<>();
+        String typeName = "";
+
 
         if (match(Token.Type.IDENTIFIER)) {
             name = tokens.get(-1).getLiteral();
@@ -122,35 +122,49 @@ public final class Parser {
         }
 
 
-        if (match("(")) {
+        if (peek("(")) {
+            match("(");
+        } else {
+            if (tokens.has(0))
+                throw new ParseException("Needs (", tokens.get(0).getIndex());
+            else
+                throw new ParseException("Needs (", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
+        }
+        while (match(Token.Type.IDENTIFIER)) {
+            parameters.add(tokens.get(-1).getLiteral());
 
-            while (match(Token.Type.IDENTIFIER)) {
-                parameters.add(tokens.get(-1).getLiteral());
-
-                if (peek(":"))
-                    match(":");
+            if (peek(":"))
+                match(":");
+            else
+                throw new ParseException("Need a colon", tokens.get(0).getIndex());
+            if (match(Token.Type.IDENTIFIER)) {
+                types.add(tokens.get(-1).getLiteral());
+            } else {
+                if (tokens.has(0))
+                    throw new ParseException("Method name (identifier) expected", tokens.get(0).getIndex());
                 else
-                    throw new ParseException("Need a colon", tokens.get(0).getIndex());
-
-                if(peek(",")){
-                    match(",");
-                }
-                else {
-                    throw new ParseException("No", tokens.get(0).getIndex());
-                }
-
-                String typeName = "";
-                if (match(Token.Type.IDENTIFIER)) {
-                    typeName = tokens.get(-1).getLiteral();
-                }
-                else
-                    throw new ParseException("Need a type", tokens.get(0).getIndex());
+                    throw new ParseException("Method name (identifier) expected", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
+            }
+            if (peek(",")) {
+                match(",");
+            } else {
+                throw new ParseException("No", tokens.get(0).getIndex());
             }
 
 
-            if (!match(")")) {
-                throw new ParseException("Closing parenthesis ')' expected", tokens.get(0).getIndex());
-            }
+        }
+
+
+
+        if (!match(")")) {
+            throw new ParseException("Closing parenthesis ')' expected", tokens.get(0).getIndex());
+        }
+        if (peek(":")) {
+            match(":");
+            if (match(Token.Type.IDENTIFIER)) {
+                typeName = tokens.get(-1).getLiteral();
+            } else
+                throw new ParseException("Need a type", tokens.get(0).getIndex());
         }
 
         if (match("DO")) {
@@ -161,8 +175,10 @@ public final class Parser {
                 statements.add(parseStatement());
             }
             match("END");
-
-            return new Ast.Method(name, parameters, statements);
+            if (typeName.equals(""))
+                return new Ast.Method(name, parameters,types, Optional.empty(), statements);
+            else
+                return new Ast.Method(name, parameters, types, Optional.of(typeName), statements);
         } else {
             throw new ParseException("'DO' keyword expected", tokens.get(0).getIndex());
         }
@@ -177,6 +193,7 @@ public final class Parser {
     public Ast.Stmt parseStatement() throws ParseException {
         // throw new UnsupportedOperationException(); //TODO
 
+        // 'LET' identifier (':' identifier)? ('=' expression)? ';'
         if(peek("LET")){
             return parseDeclarationStatement();
         } else if (peek("IF")) {
@@ -226,11 +243,15 @@ public final class Parser {
      */
     public Ast.Stmt.Declaration parseDeclarationStatement() throws ParseException {
         // throw new UnsupportedOperationException(); //TODO
-        // 'LET' identifier ('=' expression)? ';'
+        // 'LET' identifier (':' identifier)? ('=' expression)? ';'
 
         match("LET");
+        String name = "";
+        String typeName = "";
 
-        if (!match(Token.Type.IDENTIFIER)) {
+        if (match(Token.Type.IDENTIFIER))
+            name = tokens.get(-1).getLiteral();
+        else {
             if (tokens.has(0))
                 throw new ParseException("Expected identifier", tokens.get(0).getIndex());
             else
@@ -238,23 +259,50 @@ public final class Parser {
             // TODO: handle actual character index instead of -1
         }
 
-        String name = tokens.get(-1).getLiteral();
+        if (match(":")) {
+            if (match(Token.Type.IDENTIFIER))
+                typeName = tokens.get(-1).getLiteral();
+            else {
+                if (tokens.has(0))
+                    throw new ParseException("Expected identifier", tokens.get(0).getIndex());
+                else
+                    throw new ParseException("Expected identifier", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
+                // TODO: handle actual character index instead of -1
+            }
+        }
 
         Optional<Ast.Expr> value = Optional.empty();
 
         if (match("=")) {
             value = Optional.of(parseExpression());
+            if (peek(";")) {
+                match(";");
+                if (typeName.equals(""))
+                    return new Ast.Stmt.Declaration(name, Optional.empty(), value);
+                else
+                    return new Ast.Stmt.Declaration(name, Optional.of(typeName), value);
+            } else {
+                if (tokens.has(0))
+                    throw new ParseException("no ;", tokens.get(0).getIndex());
+                else
+                    throw new ParseException("no ;", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
+            }
         }
 
-        if (!match(";")) {
-             System.out.println("HM");
-            if (tokens.has(0))
-                throw new ParseException("Expected semicolon", tokens.get(0).getIndex());
-            else
-                throw new ParseException("Expected semicolon", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
-            // TODO: handle actual character index instead of -1
+        else {
+             if (match(";")) {
+                 if (typeName.equals(""))
+                     return new Ast.Stmt.Declaration(name, Optional.empty(), Optional.empty());
+                 else
+                     return new Ast.Stmt.Declaration(name, Optional.of(typeName), Optional.empty());
+             }
+             else {
+                 if (tokens.has(0))
+                     throw new ParseException("no ;", tokens.get(0).getIndex());
+                 else
+                     throw new ParseException("no ;", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
+             }
         }
-        return new Ast.Stmt.Declaration(name, value);
     }
 
     /**
