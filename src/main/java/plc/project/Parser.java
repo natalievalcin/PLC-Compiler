@@ -111,7 +111,7 @@ public final class Parser {
 
         String name = "";
         List<String> parameters = new ArrayList<>();
-
+        Optional<String> returnType = Optional.empty();
         if (match(Token.Type.IDENTIFIER)) {
             name = tokens.get(-1).getLiteral();
         } else {
@@ -132,24 +132,35 @@ public final class Parser {
                 else
                     throw new ParseException("Need a colon", tokens.get(0).getIndex());
 
-                if(peek(",")){
-                    match(",");
-                }
-                else {
-                    throw new ParseException("No", tokens.get(0).getIndex());
-                }
-
                 String typeName = "";
                 if (match(Token.Type.IDENTIFIER)) {
                     typeName = tokens.get(-1).getLiteral();
-                }
-                else
+                } else
                     throw new ParseException("Need a type", tokens.get(0).getIndex());
+
+
+                if (peek(",")) {
+                    match(",");
+                } else {
+                    // throw new ParseException("No", tokens.get(0).getIndex());
+                    System.out.println("Please, let me know where did I do wrong");
+                    break;
+                }
             }
+
 
 
             if (!match(")")) {
                 throw new ParseException("Closing parenthesis ')' expected", tokens.get(0).getIndex());
+            }
+        }
+        //Check for the return type
+        if(match(":")){
+            if(match(Token.Type.IDENTIFIER)){
+                returnType = Optional.of(tokens.get(-1).getLiteral());
+            }
+            else {
+                throw new ParseException("Expected return type identifier", tokens.get(0).getIndex());
             }
         }
 
@@ -162,7 +173,7 @@ public final class Parser {
             }
             match("END");
 
-            return new Ast.Method(name, parameters, statements);
+            return new Ast.Method(name, parameters, new ArrayList<>(), returnType, statements);
         } else {
             throw new ParseException("'DO' keyword expected", tokens.get(0).getIndex());
         }
@@ -239,22 +250,34 @@ public final class Parser {
         }
 
         String name = tokens.get(-1).getLiteral();
-
+        Optional<String> typeName = Optional.empty();
         Optional<Ast.Expr> value = Optional.empty();
 
         if (match("=")) {
             value = Optional.of(parseExpression());
         }
 
+        //check for the colon
+        if (peek(":")){
+            match(":");
+            if (match(Token.Type.IDENTIFIER)){
+                typeName = Optional.of(tokens.get(-1).getLiteral());
+            }else {
+                throw new ParseException("Expected identifier", tokens.get(0).getIndex());
+            }
+        }
         if (!match(";")) {
-             System.out.println("HM");
+             //System.out.println("WHY??");
+            //System.out.println("Token: " + tokens.get(0).getLiteral() + ", Type: " + tokens.get(0).getType());
             if (tokens.has(0))
                 throw new ParseException("Expected semicolon", tokens.get(0).getIndex());
+
             else
                 throw new ParseException("Expected semicolon", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
             // TODO: handle actual character index instead of -1
         }
-        return new Ast.Stmt.Declaration(name, value);
+
+        return new Ast.Stmt.Declaration(name,typeName, value);
     }
 
     /**
