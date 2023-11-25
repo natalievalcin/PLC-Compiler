@@ -150,11 +150,7 @@ public final class Parser {
             } else {
                 throw new ParseException("No", tokens.get(0).getIndex());
             }
-
-
         }
-
-
 
         if (!match(")")) {
             throw new ParseException("Closing parenthesis ')' expected", tokens.get(0).getIndex());
