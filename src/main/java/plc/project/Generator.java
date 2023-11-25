@@ -112,7 +112,7 @@ public final class Generator implements Ast.Visitor<Void> {
         //throw new UnsupportedOperationException(); //TODO
         print(ast.getFunction().getReturnType().getJvmName());
         print(" ");
-        print(ast.getFunction().getName());
+        print(ast.getName());
         print("(");
         for (int i = 0; i < ast.getParameters().size(); i++) {
             print(ast.getParameterTypeNames().get(i));
@@ -256,8 +256,10 @@ public final class Generator implements Ast.Visitor<Void> {
         //throw new UnsupportedOperationException(); //TODO
         if(ast.getType() == Environment.Type.CHARACTER){
             print("'");
-            ast.getLiteral();
-            print("\"");
+            // edit this to print ast.getLiteral()
+            print(ast.getLiteral());
+            // edit this to print ' not "
+            print("'");
         }
         else if(ast.getType() == Environment.Type.STRING){
             print("\"");
@@ -304,7 +306,8 @@ public final class Generator implements Ast.Visitor<Void> {
     public Void visit(Ast.Expr.Access ast) {
         //throw new UnsupportedOperationException(); //TODO
         if (ast.getReceiver().isPresent()) {
-            print(ast.getReceiver());
+            // edit this to print(ast.getReceiver().get())
+            print(ast.getReceiver().get());
             print(".");
         }
         print(ast.getVariable().getJvmName());
@@ -322,10 +325,12 @@ public final class Generator implements Ast.Visitor<Void> {
         print(ast.getFunction().getJvmName());
         print("(");
 
-        for(int i = 0; i < ast.getArguments().size(); i++){
-            print(ast.getArguments().get(i));
-            if(i != ast.getArguments().size()-1){
-                print(", ");
+        if (!ast.getArguments().isEmpty()) {
+            for(int i = 0; i < ast.getArguments().size(); i++){
+                print(ast.getArguments().get(i));
+                if(i != ast.getArguments().size()-1){
+                    print(", ");
+                }
             }
         }
         print(")");
