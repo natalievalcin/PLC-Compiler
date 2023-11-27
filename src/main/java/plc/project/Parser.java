@@ -111,25 +111,18 @@ public final class Parser {
         List<String> types = new ArrayList<>();
         String typeName = "";
 
-
         if (match(Token.Type.IDENTIFIER)) {
             name = tokens.get(-1).getLiteral();
         } else {
-            if (tokens.has(0))
-                throw new ParseException("Method name (identifier) expected", tokens.get(0).getIndex());
-            else
-                throw new ParseException("Method name (identifier) expected", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
+            throw new ParseException("Method name (identifier) expected", tokens.get(0).getIndex());
         }
-
 
         if (peek("(")) {
             match("(");
         } else {
-            if (tokens.has(0))
-                throw new ParseException("Needs (", tokens.get(0).getIndex());
-            else
-                throw new ParseException("Needs (", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
+            throw new ParseException("Needs (", tokens.get(0).getIndex());
         }
+
         while (match(Token.Type.IDENTIFIER)) {
             parameters.add(tokens.get(-1).getLiteral());
 
@@ -137,48 +130,53 @@ public final class Parser {
                 match(":");
             else
                 throw new ParseException("Need a colon", tokens.get(0).getIndex());
+
             if (match(Token.Type.IDENTIFIER)) {
                 types.add(tokens.get(-1).getLiteral());
             } else {
-                if (tokens.has(0))
-                    throw new ParseException("Method name (identifier) expected", tokens.get(0).getIndex());
-                else
-                    throw new ParseException("Method name (identifier) expected", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
+                throw new ParseException("Method name (identifier) expected", tokens.get(0).getIndex());
             }
-            if (peek(",")) {
-                match(",");
-            } else {
-                throw new ParseException("No", tokens.get(0).getIndex());
+
+            if (!peek(",")) {
+                break;
             }
+
+            match(",");
         }
 
         if (!match(")")) {
             throw new ParseException("Closing parenthesis ')' expected", tokens.get(0).getIndex());
         }
+
         if (peek(":")) {
             match(":");
             if (match(Token.Type.IDENTIFIER)) {
                 typeName = tokens.get(-1).getLiteral();
-            } else
+            } else {
                 throw new ParseException("Need a type", tokens.get(0).getIndex());
+            }
+        }
+        if (!match("DO")){
+            throw new ParseException("Not match", tokens.get(0).getIndex());
         }
 
-        if (match("DO")) {
 
             List<Ast.Stmt> statements = new ArrayList<>();
 
             while (!peek("END")) {
                 statements.add(parseStatement());
             }
+
             match("END");
-            if (typeName.equals(""))
-                return new Ast.Method(name, parameters,types, Optional.empty(), statements);
-            else
+
+            if (typeName.equals("")) {
+                return new Ast.Method(name, parameters, types, Optional.empty(), statements);
+            } else {
                 return new Ast.Method(name, parameters, types, Optional.of(typeName), statements);
-        } else {
-            throw new ParseException("'DO' keyword expected", tokens.get(0).getIndex());
-        }
+            }
+
     }
+
 
 
     /**
