@@ -116,6 +116,33 @@ public class GeneratorTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
+    void testMethod(String test, Ast.Method ast, String expected) {test(ast, expected);}
+
+    private static Stream<Arguments> testMethod() {
+        return Stream.of(
+                Arguments.of("Square",
+                        // DEF square(num: Decimal): Decimal DO
+                        //      RETURN num * num;
+                        // END
+                        init(new Ast.Method("square", Arrays.asList("num"), Arrays.asList("Decimal"), Optional.of("Decimal"), Arrays.asList(
+                                new Ast.Stmt.Return(new Ast.Expr.Binary("*",
+                                        init(new Ast.Expr.Access(Optional.empty(), "num"), ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.DECIMAL, Environment.NIL))),
+                                        init(new Ast.Expr.Access(Optional.empty(), "num"), ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.DECIMAL, Environment.NIL)))
+                        )))
+                        ), ast -> ast.setFunction(new Environment.Function("square", "square", Arrays.asList(), Environment.Type.DECIMAL, args -> Environment.NIL))
+                        ),
+                    String.join(System.lineSeparator(),
+                "double square(double num) {",
+                          "    return num * num;",
+                        "}"
+                    )
+                )
+        );
+    }
+
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
     void testDeclarationStatement(String test, Ast.Stmt.Declaration ast, String expected) {
         test(ast, expected);
     }
@@ -179,6 +206,36 @@ public class GeneratorTests {
                                 "}"
                         )
                 )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testWhileStatement(String test, Ast.Stmt.While ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testWhileStatement() {
+        return Stream.of(
+                Arguments.of("Multiple Statements",
+                        // WHILE cond DO stmt1; stmt2; stmt3; END
+                        new Ast.Stmt.While(
+                                init(new Ast.Expr.Access(Optional.empty(), "cond"), ast -> ast.setVariable(new Environment.Variable("cond", "cond", Environment.Type.BOOLEAN, Environment.NIL))),
+                                Arrays.asList(new Ast.Stmt.Expression(init(new Ast.Expr.Access(Optional.empty(), "stmt1"), ast -> ast.setVariable(new Environment.Variable("stmt1", "stmt1", Environment.Type.NIL, Environment.NIL)))),
+                                        new Ast.Stmt.Expression(init(new Ast.Expr.Access(Optional.empty(), "stmt2"), ast -> ast.setVariable(new Environment.Variable("stmt2", "stmt2", Environment.Type.NIL, Environment.NIL)))),
+                                        new Ast.Stmt.Expression(init(new Ast.Expr.Access(Optional.empty(), "stmt3"), ast -> ast.setVariable(new Environment.Variable("stmt3", "stmt3", Environment.Type.NIL, Environment.NIL))))
+                                )
+                        ),
+                        String.join(System.lineSeparator(),
+                                "while (cond) {",
+                                "    stmt1;",
+                                "    stmt2;",
+                                "    stmt3;",
+                                "}"
+                        )
+
+                )
+
         );
     }
 

@@ -1,5 +1,7 @@
 package plc.project;
 
+import javafx.util.converter.BigDecimalStringConverter;
+
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -229,7 +231,7 @@ public final class Generator implements Ast.Visitor<Void> {
 
         if (!ast.getStatements().isEmpty())
         {
-            indent++;
+//            indent++;
             for (int i = 0; i < ast.getStatements().size(); i++)
             {
                 newline(indent+1);
