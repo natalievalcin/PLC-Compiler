@@ -116,28 +116,35 @@ public final class Generator implements Ast.Visitor<Void> {
         print(" ");
         print(ast.getName());
         print("(");
+
         for (int i = 0; i < ast.getParameters().size(); i++) {
-            print(ast.getParameterTypeNames().get(i));
+            //print Jvm name of current parameter type
+            print(Environment.getType(ast.getParameterTypeNames().get(i)).getJvmName());
             print(" ");
             print(ast.getParameters().get(i));
-            if (i != ast.getParameters().size() - 1)
+
+            if (i != ast.getParameters().size() - 1) {
                 print(", ");
+            }
         }
+
         print(") {");
 
         if (!ast.getStatements().isEmpty()) {
             indent++;
-            for (int i = 0; i < ast.getStatements().size(); i++) {
+
+            for (Ast.Stmt stmt : ast.getStatements()) {
                 newline(indent);
-                print(ast.getStatements().get(i));
+                print(stmt);
             }
+
             indent--;
             newline(indent);
         }
+
         print("}");
 
-        return null;
-
+       return null;
     }
 
     @Override
