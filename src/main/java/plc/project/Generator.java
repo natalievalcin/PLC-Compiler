@@ -244,7 +244,7 @@ public final class Generator implements Ast.Visitor<Void> {
                 newline(indent+1);
                 print(ast.getStatements().get(i));
             }
-            indent--;
+//            indent--;
             newline(indent);
             print("}");
         } else print("}");
