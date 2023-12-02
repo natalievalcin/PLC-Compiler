@@ -69,12 +69,12 @@ public final class Generator implements Ast.Visitor<Void> {
         for (int i = 0; i < ast.getMethods().size(); i++) {
             newline(indent);
             print(ast.getMethods().get(i));
+            newline(0);
 
             // Max advised in OH 11/13:
             // get the type and the name of the function. print out before printing out the statements in the method
             // can do it in this function or the method function
         }
-        newline(0);
         indent--;
         newline(indent);
         print("}");
