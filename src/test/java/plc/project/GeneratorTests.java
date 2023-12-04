@@ -116,6 +116,25 @@ public class GeneratorTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
+    void testField(String test, Ast.Field ast, String expected) {test(ast, expected);}
+
+    private static Stream<Arguments> testField(){
+        return Stream.of(
+                Arguments.of("Supertype",
+                        // LET name: Comparable = string;
+                        init(new Ast.Field("name", "Comparable", Optional.of(
+                                init(new Ast.Expr.Literal("string"), ast -> ast.setType(Environment.Type.COMPARABLE))
+                                )), ast -> ast.setVariable(new Environment.Variable("name", "name", Environment.Type.COMPARABLE, Environment.NIL))
+                        ),
+                        String.join(System.lineSeparator(),
+                                "Comparable name = string;"
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
     void testMethod(String test, Ast.Method ast, String expected) {test(ast, expected);}
 
     private static Stream<Arguments> testMethod() {

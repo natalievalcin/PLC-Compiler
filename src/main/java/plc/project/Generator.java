@@ -95,6 +95,14 @@ public final class Generator implements Ast.Visitor<Void> {
             print("char");
         else if (ast.getTypeName().equals("Decimal"))
             print("double");
+        else if (ast.getTypeName().equals("Any"))
+            print("Object");
+        else if (ast.getTypeName().equals("Nil"))
+            print("Void");
+        else if (ast.getTypeName().equals("IntegerIterable"))
+            print("Iterable<Integer>");
+        else if (ast.getTypeName().equals("Comparable"))
+            print("Comparable");
         print(" ");
         print(ast.getName());
         if (ast.getValue().isPresent()) {
