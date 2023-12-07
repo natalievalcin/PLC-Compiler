@@ -46,6 +46,43 @@ public class EndToEndGeneratorTests {
                                 "",
                                 "}"
                         )
+                ),
+                Arguments.of("Multiple Fields & Methods",
+                        // LET x: Integer;
+                        // LET y: Decimal;
+                        // LET z: String;
+                        // DEF f(): Integer DO RETURN x; END
+                        // DEF g(): Decimal DO RETURN y; END
+                        // DEF h(): String DO RETURN z; END
+                        // DEF main(): Integer DO END
+                        "LET x: Integer;\nLET y: Decimal;\nLET z: String;\nDEF f(): Integer DO RETURN x; END\nDEF g(): Decimal DO RETURN y; END\nDEF h(): String DO RETURN z; END\nDEF main(): Integer DO END",
+                        String.join(System.lineSeparator(),
+                                "public class Main {",
+                                "",
+                                "    int x;",
+                                "    double y;",
+                                "    String z;",
+                                "",
+                                "    public static void main(String[] args) {",
+                                "        System.exit(new Main().main());",
+                                "    }",
+                                "",
+                                "    int f() {",
+                                "        return x;",
+                                "    }",
+                                "",
+                                "    double g() {",
+                                "        return y;",
+                                "    }",
+                                "",
+                                "    String h() {",
+                                "        return z;",
+                                "    }",
+                                "",
+                                "    int main() {}",
+                                "",
+                                "}"
+                        )
                 )
         );
     }

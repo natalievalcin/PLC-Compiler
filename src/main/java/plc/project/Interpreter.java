@@ -48,7 +48,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     public Environment.PlcObject visit(Ast.Field ast) {
         //throw new UnsupportedOperationException(); //TODO
         if(ast.getValue().isPresent()){
-            scope.defineVariable(ast.getName(), visit(ast.getValue().get()));
+            scope.defineVariable(ast.getName(),visit(ast.getValue().get()));
         }else {
             scope.defineVariable(ast.getName(), Environment.NIL);
         }

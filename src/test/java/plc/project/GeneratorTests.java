@@ -252,9 +252,38 @@ public class GeneratorTests {
                                 "    stmt3;",
                                 "}"
                         )
-
                 )
+//                Arguments.of("Nested While",
+//                        // WHILE cond1 DO
+//                        //     WHILE cond2 DO
+//                        //         stmt;
+//                        //     END
+//                        // END
+//                        new Ast.Stmt.While(
+//                                init(new Ast.Expr.Access(Optional.empty(), "cond1"), ast -> ast.setVariable(new Environment.Variable("cond1", "cond1", Environment.Type.BOOLEAN, Environment.NIL))),
+//                                new Ast.Stmt.While(
+//                                        init(new Ast.Expr.Access(Optional.empty(), "cond2"), ast -> ast.setVariable(new Environment.Variable("cond2", "cond2", Environment.Type.BOOLEAN, Environment.NIL))),
+//                                        Arrays.asList(new Ast.Stmt.Expression(init(new Ast.Expr.Access(Optional.empty(), "stmt1"), ast -> ast.setVariable(new Environment.Variable("stmt1", "stmt1", Environment.Type.NIL, Environment.NIL)))),
+//                                                new Ast.Stmt.Expression(init(new Ast.Expr.Access(Optional.empty(), "stmt2"), ast -> ast.setVariable(new Environment.Variable("stmt2", "stmt2", Environment.Type.NIL, Environment.NIL)))),
+//                                                new Ast.Stmt.Expression(init(new Ast.Expr.Access(Optional.empty(), "stmt3"), ast -> ast.setVariable(new Environment.Variable("stmt3", "stmt3", Environment.Type.NIL, Environment.NIL))))
+//                                        )
+//                                )
+//                        )
+//                )
+        );
+    }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testLiteralExpression(String test, Ast.Expr.Literal ast, String expected) {test(ast, expected);}
+
+    private static Stream<Arguments> testLiteralExpression() {
+        return Stream.of(
+                Arguments.of("Nil",
+                       // NIL
+                        init(new Ast.Expr.Literal(null), ast -> ast.setType(Environment.Type.NIL)
+                        ), "null"
+                )
         );
     }
 

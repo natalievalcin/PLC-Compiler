@@ -54,7 +54,66 @@ final class InterpreterTests {
                                         new Ast.Expr.Access(Optional.empty(), "x"),
                                         new Ast.Expr.Access(Optional.empty(), "y")    ))
                         )))
-                ), BigInteger.valueOf(11)     )
+                ), BigInteger.valueOf(11)),
+                Arguments.of("Field Access", new Ast.Source(
+                        // LET x = 1; DEF main() DO log(x); END
+                        Arrays.asList(
+                                new Ast.Field("x", Optional.of(new Ast.Expr.Literal(BigInteger.ONE)))
+                        ),
+                        Arrays.asList(new Ast.Method("main", Arrays.asList(), Arrays.asList(
+                                new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                        new Ast.Expr.Access(Optional.empty(), "x")
+                                )))
+                        )))
+                ), Environment.NIL.getValue()),
+                Arguments.of("Function Calls", new Ast.Source(
+                                // DEF f(x) DO log(x); END
+                                // DEF g(y) DO log(y); f(y + 1); END
+                                // DEF h(z) DO log(z); g(z + 1); END
+                                // DEF main() DO f(0); g(1); h(2); END
+                        Arrays.asList(),
+                        Arrays.asList(
+                                new Ast.Method("f", Arrays.asList("x"), Arrays.asList(
+                                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                                new Ast.Expr.Access(Optional.empty(), "x")
+                                        )))
+                                )),
+                                new Ast.Method("g", Arrays.asList("y"), Arrays.asList(
+                                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                                new Ast.Expr.Access(Optional.empty(), "y")
+                                        ))),
+                                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "f", Arrays.asList(
+                                                new Ast.Expr.Binary("+",
+                                                        new Ast.Expr.Access(Optional.empty(), "y"),
+                                                        new Ast.Expr.Literal(BigInteger.ONE))
+                                        )))
+                                )),
+                                new Ast.Method("h", Arrays.asList("z"), Arrays.asList(
+                                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                                new Ast.Expr.Access(Optional.empty(), "z")
+                                        ))),
+                                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "g", Arrays.asList(
+                                                new Ast.Expr.Binary("+",
+                                                        new Ast.Expr.Access(Optional.empty(), "z"),
+                                                        new Ast.Expr.Literal(BigInteger.ONE))
+                                        )))
+                                )),
+                                new Ast.Method("main", Arrays.asList(), Arrays.asList(
+                                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "f", Arrays.asList(
+                                                new Ast.Expr.Literal(BigInteger.ZERO)
+                                        ))),
+                                        new Ast.Stmt.Expression(
+                                                new Ast.Expr.Function(Optional.empty(), "g", Arrays.asList(
+                                                        new Ast.Expr.Literal(BigInteger.ONE)
+                                        ))),
+                                        new Ast.Stmt.Expression(
+                                                new Ast.Expr.Function(Optional.empty(), "h", Arrays.asList(
+                                                        new Ast.Expr.Literal(BigInteger.valueOf(2))
+                                        )))
+
+                                ))
+                        )
+                ), Environment.NIL.getValue())
         );
     }
 
@@ -68,7 +127,10 @@ final class InterpreterTests {
     private static Stream<Arguments> testField() {
         return Stream.of(
                 Arguments.of("Declaration", new Ast.Field("name", Optional.empty()), Environment.NIL.getValue()),
-                Arguments.of("Initialization", new Ast.Field("name", Optional.of(new Ast.Expr.Literal(BigInteger.ONE))), BigInteger.ONE)
+                Arguments.of("Initialization", new Ast.Field("name", Optional.of(new Ast.Expr.Literal(BigInteger.ONE))), BigInteger.ONE),
+                Arguments.of("Function Value", new  Ast.Field("name", Optional.of(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                        new Ast.Expr.Literal(BigInteger.ONE)
+                )))), Environment.NIL.getValue())
         );
     }
 
@@ -76,8 +138,16 @@ final class InterpreterTests {
     @MethodSource
     void testMethod(String test, Ast.Method ast, List<Environment.PlcObject> args, Object expected) {
         Scope scope = test(ast, Environment.NIL.getValue(), new Scope(null));
+        StringBuilder builder = new StringBuilder();
+        scope.defineFunction("log", 1, argsT -> {
+            builder.append(argsT.get(0).getValue());
+            return argsT.get(0);
+        });
+
         Assertions.assertEquals(expected, scope.lookupFunction(ast.getName(), args.size()).invoke(args).getValue());
     }
+
+
 
     private static Stream<Arguments> testMethod() {
         return Stream.of(
@@ -97,7 +167,38 @@ final class InterpreterTests {
                         )),
                         Arrays.asList(Environment.create(BigInteger.TEN)),
                         BigInteger.valueOf(100)
+                ),
+                Arguments.of("Single Argument",
+                        new Ast.Method("func", Arrays.asList("x"), Arrays.asList(
+                                new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                        new Ast.Expr.Access(Optional.empty(), "x")
+                                )))
+                        )),
+                        Arrays.asList(Environment.create(BigInteger.TEN)),
+                        Environment.NIL.getValue()
+                ),
+                Arguments.of("Multiple Arguments",
+                        // DEF func(x, y, z) DO log(x); log(y); log(z); END tested with func(0, 1, 10)
+                        new Ast.Method("func", Arrays.asList("x", "y", "z"), Arrays.asList(
+                                new Ast.Stmt.Expression(new Ast.Expr.Function(
+                                        Optional.empty(), "log", Arrays.asList(new Ast.Expr.Access(Optional.empty(), "x"))
+                                )),
+                                new Ast.Stmt.Expression(new Ast.Expr.Function(
+                                        Optional.empty(), "log", Arrays.asList(new Ast.Expr.Access(Optional.empty(), "y"))
+                                )),
+                                new Ast.Stmt.Expression(new Ast.Expr.Function(
+                                        Optional.empty(), "log", Arrays.asList(new Ast.Expr.Access(Optional.empty(), "z"))
+                                ))
+                        )),
+                        Arrays.asList(
+                                Environment.create(BigInteger.ZERO),
+                                Environment.create(BigInteger.ONE),
+                                Environment.create(BigInteger.TEN)
+                        ),
+                        Environment.NIL.getValue()
                 )
+
+
         );
     }
 
@@ -210,6 +311,79 @@ final class InterpreterTests {
         Assertions.assertEquals(BigInteger.TEN, scope.lookupVariable("sum").getValue().getValue());
     }
 
+    @Test
+    void testForStatementTwo() {
+        Scope scope = new Scope(null);
+        scope.defineVariable("list", Environment.create(IntStream.range(0, 5)
+                .mapToObj(i -> Environment.create(BigInteger.valueOf(i)))
+                .collect(Collectors.toList())));
+        StringBuilder builder = new StringBuilder();
+        scope.defineFunction("log", 1, args -> {
+            builder.append(args.get(0).getValue());
+            return args.get(0);
+        });
+        test(new Ast.Stmt.For("num",
+                new Ast.Expr.Access(Optional.empty(), "list"),
+                Arrays.asList(new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                        new Ast.Expr.Access(Optional.empty(), "num")
+                ))))
+        ), Environment.NIL.getValue(), scope);
+        Assertions.assertEquals("01234", builder.toString());
+    }
+
+    @ParameterizedTest
+    @MethodSource("testIfScope")
+    void testIfScope(String test, Ast ast, Object expected) {
+        Scope scope = new Scope(null);
+        StringBuilder builder = new StringBuilder();
+        scope.defineFunction("log", 1, args -> {
+            builder.append(args.get(0).getValue());
+            return args.get(0);
+        });
+        scope.defineFunction("Main", 0, args -> Environment.create("main"));
+        test(ast, expected, scope);
+    }
+
+    private static Stream<Arguments> testIfScope() {
+        return Stream.of(
+                Arguments.of("If Scope",
+                        new Ast.Source(
+                                Arrays.asList(),
+                                Arrays.asList(new Ast.Method("main", Arrays.asList(), Arrays.asList(
+                                        new Ast.Stmt.Declaration("x", Optional.of(new Ast.Expr.Literal(BigInteger.ONE))),
+                                        new Ast.Stmt.Declaration("y", Optional.of(new Ast.Expr.Literal(BigInteger.valueOf(2)))),
+                                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                                new Ast.Expr.Access(Optional.empty(), "x")
+                                        ))),
+                                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                                new Ast.Expr.Access(Optional.empty(), "y")
+                                        ))),
+                                        new Ast.Stmt.If(
+                                                new Ast.Expr.Literal(true),
+                                                Arrays.asList(
+                                                        new Ast.Stmt.Declaration("x", Optional.of(new Ast.Expr.Literal(BigInteger.ONE))),
+                                                        new Ast.Stmt.Assignment(new Ast.Expr.Access(Optional.empty(),"y"), new Ast.Expr.Literal(BigInteger.valueOf(4))),
+                                                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                                                new Ast.Expr.Access(Optional.empty(), "x")
+                                                        ))),
+                                                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                                                new Ast.Expr.Access(Optional.empty(), "y")
+                                                        )))),
+                                                Arrays.asList()
+                                        ),
+                                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                                new Ast.Expr.Access(Optional.empty(), "x")
+                                        ))),
+                                        new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                                new Ast.Expr.Access(Optional.empty(), "y")
+                                        )))
+                                )))
+                        ),
+                        // Expected result for the test case
+                        Environment.NIL.getValue()
+                )
+        );
+    }
     @Test
     void testWhileStatement() {
         Scope scope = new Scope(null);
@@ -329,6 +503,57 @@ final class InterpreterTests {
                                 new Ast.Expr.Literal(new BigDecimal("3.4"))
                         ),
                         new BigDecimal("0.4")
+                ),
+                Arguments.of("Division Integer?",
+                        new Ast.Expr.Binary("/",
+                                new Ast.Expr.Literal(new BigDecimal("5")),
+                                new Ast.Expr.Literal(new BigDecimal("2"))
+                        ),
+                        new BigDecimal("2")
+                ),
+
+                Arguments.of("Integer Decimal Subtraction",
+                        new Ast.Expr.Binary("-",
+                                new Ast.Expr.Literal(new BigDecimal("15.2")),
+                                new Ast.Expr.Literal(new BigInteger("1"))
+                        ),
+                        null
+                ),
+                Arguments.of("Integer Divide by Zero",
+                        new Ast.Expr.Binary("/",
+                                new Ast.Expr.Literal(new BigDecimal("30")),
+                                new Ast.Expr.Literal(new BigDecimal("0"))
+                        ),
+                        null
+                ),
+
+                Arguments.of("Base Integer Exponent Decimal",
+                        new Ast.Expr.Binary("^",
+                                new Ast.Expr.Literal(new BigInteger("2")),
+                                new Ast.Expr.Literal(new BigDecimal("5"))
+                        ),
+                        null
+                ),
+                Arguments.of("Decimal Divide by Zero",
+                        new Ast.Expr.Binary("/",
+                                new Ast.Expr.Literal(new BigDecimal("1.5")),
+                                new Ast.Expr.Literal(new BigDecimal("0.0"))
+                        ),
+                        null
+                ),
+                Arguments.of("Base Decimal Exponent Decimal",
+                        new Ast.Expr.Binary("^",
+                                new Ast.Expr.Literal(new BigDecimal("2")),
+                                new Ast.Expr.Literal(new BigDecimal("5"))
+                        ),
+                        null
+                ),
+                Arguments.of("AND (Short Circuit)",
+                        new Ast.Expr.Binary("AND",
+                                new Ast.Expr.Literal(false),
+                                new Ast.Expr.Access(Optional.empty(), "undefined")
+                        ),
+                        false
                 )
         );
     }
@@ -353,6 +578,80 @@ final class InterpreterTests {
                 Arguments.of("Field",
                         new Ast.Expr.Access(Optional.of(new Ast.Expr.Access(Optional.empty(), "object")), "field"),
                         "object.field"
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("testMethodScope")
+    void testMethodScope(String test, Ast ast, Object expected) {
+        Scope scope = new Scope(null);
+        scope.defineFunction("Function", 1, args -> Environment.create("f"));
+        Scope object = new Scope(null);
+        object.defineFunction("Main", 0, args -> Environment.create("main"));
+
+        test(ast, expected, scope);
+    }
+
+    private static Stream<Arguments> testMethodScope() {
+        return Stream.of(
+                Arguments.of("Method Scope",
+                        new Ast.Source(
+                                Arrays.asList(
+                                        new Ast.Field("x", Optional.of(new Ast.Expr.Literal(BigInteger.ONE))),
+                                        new Ast.Field("y", Optional.of(new Ast.Expr.Literal(BigInteger.valueOf(2)))),
+                                        new Ast.Field("z", Optional.of(new Ast.Expr.Literal(BigInteger.valueOf(3))))),
+
+                                // Add returns
+                                // Check argument for f
+                                Arrays.asList(new Ast.Method("f", Arrays.asList("z"), Arrays.asList(
+                                                new Ast.Stmt.Return(
+                                                        new Ast.Expr.Binary("+",
+                                                                new Ast.Expr.Binary("+",
+                                                                        new Ast.Expr.Access(Optional.empty(), "x"),
+                                                                        new Ast.Expr.Access(Optional.empty(), "y")),
+                                                                new Ast.Expr.Access(Optional.empty(), "z"))))),
+                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(
+                                                new Ast.Stmt.Declaration("y", Optional.of(new Ast.Expr.Literal(BigInteger.valueOf(4)))),
+                                                new Ast.Stmt.Return(
+                                                        new Ast.Expr.Function(Optional.empty(), "f", Arrays.asList(new Ast.Expr.Literal(BigInteger.valueOf(5)))))))
+                                )
+                        ),
+                        // Expected result for the test case
+                        BigInteger.valueOf(8)
+                )
+        );
+    }
+    @ParameterizedTest
+    @MethodSource
+    void testIfStatementfalsefalse2(String test, Ast.Stmt.If ast, Object expected) {
+        Scope scope = new Scope(null);
+        scope.defineVariable("num", Environment.NIL);
+
+        StringBuilder builder = new StringBuilder();
+        scope.defineFunction("log", 1, argsT -> {
+            builder.append(argsT.get(0).getValue());
+            return argsT.get(0);
+        });
+        test(ast, Environment.NIL.getValue(), scope);
+        Assertions.assertEquals(expected, builder.toString());
+    }
+
+    private static Stream<Arguments> testIfStatementfalsefalse2() {
+        return Stream.of(
+                Arguments.of("Function Condition",
+                        new Ast.Stmt.If(
+                                new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                        new Ast.Expr.Literal(false)
+                                )),
+                                Arrays.asList(new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                        new Ast.Expr.Literal(BigInteger.ONE)
+                                )))),
+                                Arrays.asList(new Ast.Stmt.Expression(new Ast.Expr.Function(Optional.empty(), "log", Arrays.asList(
+                                        new Ast.Expr.Literal(new BigInteger("2"))
+                                ))))
+                        ),
+                        "false2"
                 )
         );
     }
@@ -385,45 +684,6 @@ final class InterpreterTests {
         );
     }
 
-    @ParameterizedTest
-    @MethodSource
-    void testMethodScope(String test, Ast ast, Object expected) {
-        Scope scope = new Scope(null);
-        scope.defineFunction("Function", 1, args -> Environment.create("f"));
-        Scope object = new Scope(null);
-        object.defineFunction("Main", 0, args -> Environment.create("main"));
-
-        test(ast, expected, scope);
-    }
-    private static Stream<Arguments> testMethodScope() {
-        return Stream.of(
-                Arguments.of("Method Scope",
-                        new Ast.Source(
-                                Arrays.asList(
-                                        new Ast.Field("x", Optional.of(new Ast.Expr.Literal(BigInteger.ONE))),
-                                        new Ast.Field("y", Optional.of(new Ast.Expr.Literal(BigInteger.valueOf(2)))),
-                                        new Ast.Field("z", Optional.of(new Ast.Expr.Literal(BigInteger.valueOf(3))))),
-
-                                // Add returns
-                                // Check argument for f
-                                Arrays.asList(new Ast.Method("f", Arrays.asList("z"), Arrays.asList(
-                                                new Ast.Stmt.Return(
-                                                        new Ast.Expr.Binary("+",
-                                                                new Ast.Expr.Binary("+",
-                                                                        new Ast.Expr.Access(Optional.empty(), "x"),
-                                                                        new Ast.Expr.Access(Optional.empty(), "y")),
-                                                                new Ast.Expr.Access(Optional.empty(), "z"))))),
-                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(
-                                                new Ast.Stmt.Declaration("y", Optional.of(new Ast.Expr.Literal(BigInteger.valueOf(4)))),
-                                                new Ast.Stmt.Return(
-                                                        new Ast.Expr.Function(Optional.empty(), "f", Arrays.asList(new Ast.Expr.Literal(BigInteger.valueOf(5)))))))
-                                )
-                        ),
-                        // Expected result for the test case
-                        BigInteger.valueOf(8)
-                )
-        );
-    }
 
     private static Scope test(Ast ast, Object expected, Scope scope) {
         Interpreter interpreter = new Interpreter(scope);

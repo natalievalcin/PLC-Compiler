@@ -288,7 +288,10 @@ public final class Generator implements Ast.Visitor<Void> {
         } else if (ast.getType() == Environment.Type.INTEGER) {
             BigInteger bigInteger = BigInteger.class.cast(ast.getLiteral());
             print(bigInteger.intValue());
-        }else {
+        } else if (ast.getType() == Environment.Type.NIL) {
+            print("null");
+        }
+        else {
             print(ast.getLiteral());
         }
         return null;

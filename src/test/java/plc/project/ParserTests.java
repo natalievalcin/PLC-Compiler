@@ -74,6 +74,34 @@ final class ParserTests {
 
     @ParameterizedTest
     @MethodSource
+    void testMethod(String test, List<Token> tokens, Ast.Method expected) {
+        test(tokens, expected, Parser::parseMethod);
+    }
+
+    private static Stream<Arguments> testMethod() {
+        return Stream.of(
+                Arguments.of("One Argument",
+                        Arrays.asList(
+                                //DEF name(x) DO stmt; END
+                                new Token(Token.Type.IDENTIFIER, "DEF", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, "(",8),
+                                new Token(Token.Type.IDENTIFIER, "x", 9),
+                                new Token(Token.Type.OPERATOR, ")", 10),
+                                new Token(Token.Type.IDENTIFIER, "DO", 12),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 15),
+                                new Token(Token.Type.OPERATOR, ";", 19),
+                                new Token(Token.Type.IDENTIFIER, "END", 21)
+                        ),
+                        new Ast.Method("name", Arrays.asList("x"), Arrays.asList(), Optional.empty(), Arrays.asList(
+                                new Ast.Stmt.Expression(new Ast.Expr.Access(Optional.empty(), "stmt"))
+                        ))
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
     void testExpressionStatement(String test, List<Token> tokens, Ast.Stmt.Expression expected) {
         test(tokens, expected, Parser::parseStatement);
     }
