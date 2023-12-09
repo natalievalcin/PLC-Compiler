@@ -54,7 +54,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         }
         return Environment.NIL;
     }
-
     @Override
     public Environment.PlcObject visit(Ast.Method ast) {
         //throw new UnsupportedOperationException(); //TODO
@@ -64,16 +63,24 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
         // parent scope and a child scope may be easier: this is from professor aashish
         scope.defineFunction(ast.getName(), ast.getParameters().size(), arguments -> {
-
             try {
                 scope = new Scope(scope);
+
                 // Define variables for the incoming arguments, using the parameter names.
                 for (int i = 0; i < arguments.size(); i++) {
-                    scope.defineVariable(ast.getParameters().get(i), arguments.get(i));
+                    String paramName = ast.getParameters().get(i);
+                    Environment.PlcObject argValue = arguments.get(i);
+
+                    // Add debug logging to trace variable definition
+                    System.out.println("Defining variable " + paramName + " with value " + argValue.getValue());
+
+                    scope.defineVariable(paramName, argValue);
                 }
 
+                // Add debug logging to trace the current scope
+                System.out.println("Current Scope: " + scope);
                 // Evaluate the method's statements.
-                Environment.PlcObject returnValue = Environment.NIL; // so value can be returned in a Return exception if thrown
+                Environment.PlcObject returnValue = Environment.NIL;// so value can be returned in a Return exception if thrown
                 for (Ast.Stmt stmt : ast.getStatements()) {
                     try {
                         returnValue = visit(stmt);
@@ -87,12 +94,13 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             } finally {
                 // Restore the parent scope when finished.
                 scope = scope.getParent();
-            }
 
+                // Add debug logging to trace the restored scope
+                System.out.println("Restored Scope: " + scope);
+            }
         });
 
         return Environment.NIL;
-
     }
 
     @Override
@@ -104,7 +112,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Stmt.Declaration ast) {
-        //throw new UnsupportedOperationException(); //TODO (in lecture)
+//        //throw new UnsupportedOperationException(); //TODO (in lecture)
         if (ast.getValue().isPresent())
         {
             scope.defineVariable(ast.getName(), visit(ast.getValue().get()));
@@ -345,28 +353,41 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         //throw new UnsupportedOperationException(); //TODO
         //create a list to hold arguments
 
-        List<Environment.PlcObject> arguments = new ArrayList<Environment.PlcObject>();
+        List<Environment.PlcObject> arguments = new ArrayList<>();
         //loop through ast.getArguments
-        for (Ast.Expr args: ast.getArguments()){
+        for (Ast.Expr args : ast.getArguments()) {
             arguments.add(visit(args));
         }
-        //check if the expression has a receive;
-        if (ast.getReceiver().isPresent()) {
-            //evaluate it
-            Environment.PlcObject value = visit(ast.getReceiver().get());
-            //return the result of calling the appropriate method
-            //callMethod(String name, List<PlcObject> arguments)
-            return value.callMethod(ast.getName(), arguments);
 
-        }else {
+        // Check if the expression has a receiver
+        if (ast.getReceiver().isPresent()) {
+            // Evaluate it
+            Environment.PlcObject value = visit(ast.getReceiver().get());
+            // return the result of calling the appropriate method
+            // callMethod(String name, List<PlcObject> arguments)
+            return value.callMethod(ast.getName(), arguments);
+        } else {
             //otherwise return the value of invoking the appropriate function in the current scope with the evaluated arguments.
             Environment.Function function = scope.lookupFunction(ast.getName(), arguments.size());
-            if (scope.getParent() != null)
-                scope = scope.getParent();
-            return function.invoke(arguments);
-        }
 
+            // Check if the current scope has a parent before modifying it
+            if (scope.getParent() != null) {
+                // Use a temporary scope for function invocation
+                Scope tempScope = new Scope(scope);
+                // Invoke the function with the arguments
+                Environment.PlcObject result = function.invoke(arguments);
+
+                // Restore the original scope
+                scope = tempScope.getParent();
+
+                return result;
+            } else {
+                throw new RuntimeException("Cannot modify the current scope because it has no parent.");
+            }
+        }
     }
+
+
 
     /**
      * Helper function to ensure an object is of the appropriate type.
