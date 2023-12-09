@@ -164,6 +164,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Stmt.For ast) {
         //throw new UnsupportedOperationException(); //TODO
+
         Iterable value = requireType(Iterable.class, visit(ast.getValue()));
 
         //For each element
@@ -173,7 +174,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 scope.defineVariable(ast.getName(), Environment.PlcObject.class.cast(element));
                 ast.getStatements().forEach(this::visit);
             } finally {
-                scope = scope.getParent();
+                if( scope.getParent() != null)
+                    scope = scope.getParent();
             }
         });
         return Environment.NIL;
