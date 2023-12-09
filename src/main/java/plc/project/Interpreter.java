@@ -64,6 +64,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
         // parent scope and a child scope may be easier: this is from professor aashish
         scope.defineFunction(ast.getName(), ast.getParameters().size(), arguments -> {
+
             try {
                 scope = new Scope(scope);
                 // Define variables for the incoming arguments, using the parameter names.
@@ -87,6 +88,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 // Restore the parent scope when finished.
                 scope = scope.getParent();
             }
+
         });
 
         return Environment.NIL;
@@ -110,6 +112,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             scope.defineVariable(ast.getName(), Environment.NIL);
         }
         return Environment.NIL;
+
     }
 
     @Override
@@ -139,6 +142,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         return Environment.NIL;
     }
 
+
+
     @Override
     public Environment.PlcObject visit(Ast.Stmt.If ast) {
         //throw new UnsupportedOperationException(); //TODO
@@ -149,8 +154,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             } finally {
                 scope = scope.getParent();
             }
-        }
-        else if (!requireType(Boolean.class, visit(ast.getCondition()))) {
+        } else {
             try {
                 scope = new Scope(scope);
                 ast.getElseStatements().forEach(this::visit);
@@ -221,33 +225,33 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     public Environment.PlcObject visit(Ast.Expr.Binary ast) {
         //throw new UnsupportedOperationException(); //TODO
         String binaryOperator = ast.getOperator();
-        switch(binaryOperator)
-        {
-            case("AND"):
-                if (requireType(Boolean.class, visit(ast.getLeft())) == requireType(Boolean.class, visit(ast.getRight())))
-                    return visit(ast.getLeft());
-                else
+        switch(binaryOperator) {
+            case ("AND"):
+                if (requireType(Boolean.class, visit(ast.getLeft())) == Boolean.TRUE) {
+                    return visit(ast.getRight());
+                } else {
                     return Environment.create(Boolean.FALSE);
-            case("OR"):
+                }
+            case ("OR"):
                 if (requireType(Boolean.class, visit(ast.getLeft())) == Boolean.TRUE)
                     return visit(ast.getLeft());
                 else if (requireType(Boolean.class, visit(ast.getRight())) == Boolean.TRUE)
                     return visit(ast.getRight());
                 else
                     return Environment.create(Boolean.FALSE);
-            case("<"):
-                return Environment.create(requireType(Comparable.class,visit(ast.getLeft())).compareTo(requireType(Comparable.class,visit(ast.getRight()))) < 0);
-            case("<="):
-                return Environment.create(requireType(Comparable.class,visit(ast.getLeft())).compareTo(requireType(Comparable.class,visit(ast.getRight()))) <= 0);
-            case(">"):
-                return Environment.create(requireType(Comparable.class,visit(ast.getLeft())).compareTo(requireType(Comparable.class,visit(ast.getRight()))) > 0);
-            case(">="):
-                return Environment.create(requireType(Comparable.class,visit(ast.getLeft())).compareTo(requireType(Comparable.class,visit(ast.getRight()))) >= 0);
-            case("=="):
+            case ("<"):
+                return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) < 0);
+            case ("<="):
+                return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) <= 0);
+            case (">"):
+                return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) > 0);
+            case (">="):
+                return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) >= 0);
+            case ("=="):
                 return Environment.create(Objects.equals(visit(ast.getLeft()).getValue(), visit(ast.getRight()).getValue()));
-            case("!="):
+            case ("!="):
                 return Environment.create(!Objects.equals(visit(ast.getLeft()).getValue(), visit(ast.getRight()).getValue()));
-            case("+"):
+            case ("+"):
                 //If either operand is a String, concatenate them.
                 if (visit(ast.getLeft()).getValue().getClass() == String.class || visit(ast.getRight()).getValue().getClass() == String.class) {
                     return Environment.create(
@@ -316,9 +320,9 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                         }
                     }
                 }
-
         }
-        return Environment.NIL;
+
+        throw new RuntimeException("Invalid binary operator: ");
     }
 
     @Override
