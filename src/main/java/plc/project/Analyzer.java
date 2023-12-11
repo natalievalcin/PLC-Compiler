@@ -84,6 +84,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Method ast) {
         try{
+
             /* The function's parameter types and return type are retrieved
              from the environment using the corresponding names in the method.*/
             List<Environment.Type> parameterTypes = new ArrayList<>();
@@ -101,6 +102,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             // Define the function in the current scope
             ast.setFunction(scope.defineFunction(ast.getName(), ast.getName(), parameterTypes, returnType, args -> Environment.NIL));
 
+
             // Create a new scope
             scope = new Scope(scope);
 
@@ -110,6 +112,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 Environment.Type parameterType = parameterTypes.get(i);
                 scope.defineVariable(parameterName, parameterName, parameterType, Environment.NIL);
             }
+            scope.defineVariable("returnType", "returnType", returnType, Environment.NIL);
 
             // Visit each statement in the method
             for (Ast.Stmt stmt : ast.getStatements()) {
