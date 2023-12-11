@@ -214,7 +214,26 @@ public class LexerTests {
                         new Token(Token.Type.OPERATOR, "=", 6),
                         new Token(Token.Type.INTEGER, "1", 8),
                         new Token(Token.Type.OPERATOR, ";", 9),
-                        new Token(Token.Type.IDENTIFIER, "WHILE", 10)
+                        new Token(Token.Type.IDENTIFIER, "WHILE", 11),
+                        new Token(Token.Type.IDENTIFIER, "i", 17),
+                        new Token(Token.Type.OPERATOR, "<=", 19),
+                        new Token(Token.Type.INTEGER, "100", 22),
+                        new Token(Token.Type.IDENTIFIER, "DO", 26),
+                        new Token(Token.Type.IDENTIFIER, "IF", 33),
+                        new Token(Token.Type.IDENTIFIER, "rem", 36),
+                        new Token(Token.Type.OPERATOR, "(", 39),
+                        new Token(Token.Type.IDENTIFIER, "i", 40),
+                        new Token(Token.Type.OPERATOR, ",", 41),
+                        new Token(Token.Type.INTEGER, "3", 43),
+                        new Token(Token.Type.OPERATOR, ")", 44),
+                        new Token(Token.Type.OPERATOR, "==", 46),
+                        new Token(Token.Type.INTEGER, "0", 49),
+                        new Token(Token.Type.IDENTIFIER, "AND", 51),
+                        new Token(Token.Type.IDENTIFIER, "rem", 55),
+                        new Token(Token.Type.OPERATOR, "(", 56),
+                        new Token(Token.Type.IDENTIFIER, "i", 57),
+                        new Token(Token.Type.OPERATOR, ",", 58),
+                        new Token(Token.Type.INTEGER, "5", 60)
                 ))
         );
     }

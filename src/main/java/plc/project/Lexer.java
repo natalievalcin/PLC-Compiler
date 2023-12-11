@@ -33,7 +33,9 @@ public final class Lexer {
         // initialize an empty list to store tokens found in source code
         List<Token> tokens = new ArrayList<>();
 
-        while (peek("(.)")) {
+        // replace peek with checking if there is a current char
+        // the period it includes but the newline, which is most likely why it is not catching that "while peek"
+        while (peek(".") || peek("\\s")) {
             if (peek("[\f\u000B\\s\b\n\r\t]")) {
                 chars.advance();
                 chars.skip();
@@ -69,15 +71,15 @@ public final class Lexer {
     }
 
     public Token lexIdentifier() {
-        while (peek("[A-Za-z_0-9_-]")) {
-            match("[A-Za-z_0-9_-]");
+        while (peek("[A-Za-z_0-9-]")) {
+            match("[A-Za-z_0-9-]");
         }
             return chars.emit(Token.Type.IDENTIFIER);
     }
 
     public Token lexNumber() {
-        if (peek("[-+]"))
-            match("[-+]");
+        if (peek("[\\-+]"))
+            match("[\\-+]");
         while (peek("[0-9]"))
             match("[0-9]");
         if (peek("\\.", "[0-9]")) {
@@ -130,22 +132,27 @@ public final class Lexer {
         }
         if (peek("\""))
             match("\"");
-        else
+        else {
+            match(".");
             throw new ParseException("invalid", chars.index);
+        }
         return chars.emit(Token.Type.STRING);
     }
 
     public void lexEscape() { //
-        match("\\\\");
-        if (!match("[bnrt\'\"\\\\]"))
+        if (peek("\\\\", "[bnrt\'\"\\\\]"))
+            match("\\\\", "[bnrt\'\"\\\\]");
+        else {
+            match(".", ".");
             throw new ParseException("CANNOT", chars.index);
+        }
     }
 
     public Token lexOperator() {
         if (peek("[<>!=]","="))
             match("[<>!=]","=");
         else
-            match("(.)");
+            match(".");
         return chars.emit(Token.Type.OPERATOR);
     }
 
