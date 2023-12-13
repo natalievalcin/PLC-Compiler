@@ -62,9 +62,11 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         // code in this function. OH: 10/16
 
         // parent scope and a child scope may be easier: this is from professor aashish
+        Scope childScope = scope;
         scope.defineFunction(ast.getName(), ast.getParameters().size(), arguments -> {
+            Scope currentScope = scope;
             try {
-                scope = new Scope(scope);
+                scope = new Scope(childScope);
 
                 // Define variables for the incoming arguments, using the parameter names.
                 for (int i = 0; i < arguments.size(); i++) {
@@ -82,24 +84,22 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 // Evaluate the method's statements.
                 Environment.PlcObject returnValue = Environment.NIL;// so value can be returned in a Return exception if thrown
                 for (Ast.Stmt stmt : ast.getStatements()) {
-                    try {
-                        returnValue = visit(stmt);
-                    } catch (Return returnException) {
-                        // Capture the return value and break out of the loop.
-                        returnValue = returnException.value;
-                        break;
-                    }
+                    visit(stmt);
                 }
-                return returnValue;
-            } finally {
+//                return returnValue;
+            } catch (Return returnException) {
+                // Capture the return value and break out of the loop.
+                return returnException.value;
+            }
+            finally {
                 // Restore the parent scope when finished.
-                scope = scope.getParent();
+                scope = currentScope;
 
                 // Add debug logging to trace the restored scope
                 System.out.println("Restored Scope: " + scope);
             }
+            return Environment.NIL;
         });
-
         return Environment.NIL;
     }
 
@@ -126,9 +126,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Stmt.Assignment ast) {
         //throw new UnsupportedOperationException(); //TODO
-        if (ast.getReceiver().getClass() == Ast.Expr.Access.class) {
-            try {
-                scope = new Scope(scope);
+        if (ast.getReceiver() instanceof Ast.Expr.Access) {
                 //ensure that the receiver is an Ast.Expr.Access
                 Ast.Expr.Access access = Ast.Expr.Access.class.cast(ast.getReceiver());
                 if(access.getReceiver().isPresent()){
@@ -143,10 +141,10 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                     Environment.Variable variable = scope.lookupVariable(access.getName());
                     variable.setValue(visit(ast.getValue()));
                 }
-            } finally {
-                scope = scope.getParent();
-            }
+
         }
+        else
+            throw new RuntimeException();
         return Environment.NIL;
     }
 
